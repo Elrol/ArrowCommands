@@ -1,0 +1,9 @@
+{
+  "id": "arrowcommands:lime_button_1",
+  "vanillaItem": "minecraft:paper",
+  "itemResource":{
+    "models": {
+      "default": "arrowcommands:item/gui/button/lime_button_1"
+    }
+  }
+}

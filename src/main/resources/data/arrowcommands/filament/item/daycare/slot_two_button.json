@@ -1,0 +1,9 @@
+{
+  "id": "arrowcommands:slot_two_button",
+  "vanillaItem": "minecraft:paper",
+  "itemResource":{
+    "models": {
+      "default": "arrowcommands:item/gui/daycare/slot_two"
+    }
+  }
+}

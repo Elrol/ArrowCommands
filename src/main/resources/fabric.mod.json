@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "arrowcommands",
+  "version": "${version}",
+  "name": "ArrowCommands",
+  "description": "The server mod for the Project: Zen server",
+  "authors": [
+    "Elrol"
+  ],
+  "license": "MIT License",
+  "icon": "assets/arrowcommands/textures/elrol.png",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "dev.elrol.arrow.commands.ArrowCommands"
+    ]
+  },
+  "depends": {
+    "minecraft": "1.21.1",
+    "cobblemon": ">=1.6.0",
+    "luckperms": ">=5.4",
+    "arrowcore": ">=1.5.0"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "arrowcommands:settings_button",
+  "vanillaItem": "minecraft:paper",
+  "itemResource":{
+    "models": {
+      "default": "arrowcommands:item/gui/main/settings"
+    }
+  }
+}

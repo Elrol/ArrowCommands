@@ -1,0 +1,9 @@
+{
+  "id": "arrowcommands:gender_button",
+  "vanillaItem": "minecraft:paper",
+  "itemResource":{
+    "models": {
+      "default": "arrowcommands:item/gui/customizer/gender"
+    }
+  }
+}

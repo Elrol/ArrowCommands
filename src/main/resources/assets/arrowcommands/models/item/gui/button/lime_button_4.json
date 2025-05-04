@@ -1,0 +1,6 @@
+{
+    "parent": "arrowcore:item/slot",
+    "textures": {
+        "layer0": "arrowcommands:item/gui/button/button_lime_4"
+    }
+}

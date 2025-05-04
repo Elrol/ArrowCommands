@@ -1,0 +1,9 @@
+{
+  "id": "arrowcommands:shop_button",
+  "vanillaItem": "minecraft:paper",
+  "itemResource":{
+    "models": {
+      "default": "arrowcommands:item/gui/main/shop"
+    }
+  }
+}

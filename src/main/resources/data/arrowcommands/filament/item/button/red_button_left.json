@@ -1,0 +1,9 @@
+{
+  "id": "arrowcommands:red_button_left",
+  "vanillaItem": "minecraft:paper",
+  "itemResource":{
+    "models": {
+      "default": "arrowcommands:item/gui/button/red_button_left"
+    }
+  }
+}

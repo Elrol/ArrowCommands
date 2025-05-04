@@ -1,0 +1,9 @@
+{
+  "id": "arrowcommands:ability_button",
+  "vanillaItem": "minecraft:paper",
+  "itemResource":{
+    "models": {
+      "default": "arrowcommands:item/gui/customizer/ability"
+    }
+  }
+}

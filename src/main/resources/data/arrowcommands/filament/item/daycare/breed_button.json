@@ -1,0 +1,9 @@
+{
+  "id": "arrowcommands:breed_button",
+  "vanillaItem": "minecraft:paper",
+  "itemResource":{
+    "models": {
+      "default": "arrowcommands:item/gui/daycare/breed"
+    }
+  }
+}
