@@ -10,6 +10,8 @@ import dev.elrol.arrow.libs.Constants;
 import dev.elrol.arrow.libs.JsonUtils;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.registry.RegistryOps;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +48,7 @@ public class KitRegistry {
         JsonUtils.saveToJson(dir, kit.id + ".json", json.getOrThrow());
     }
 
-    public static void load() {
+    public static void load(MinecraftServer server) {
         if(!dir.mkdirs()) {
             kitMap.clear();
 
@@ -56,7 +58,7 @@ public class KitRegistry {
                 for(File file : files) {
                     String id = file.getName().replace(".json", "");
                     JsonElement json = JsonUtils.loadFromJson(dir, file.getName(), JsonParser.parseString("{}"));
-                    DataResult<Pair<KitData, JsonElement>> dataPair = KitData.CODEC.decode(JsonOps.INSTANCE, json);
+                    DataResult<Pair<KitData, JsonElement>> dataPair = KitData.CODEC.decode(RegistryOps.of(JsonOps.INSTANCE, server.getRegistryManager()), json);
                     if(dataPair.isSuccess()) {
                         kitMap.put(id, dataPair.getOrThrow().getFirst());
                     }

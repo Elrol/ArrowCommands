@@ -3,7 +3,6 @@ package dev.elrol.arrow.commands;
 import com.cobblemon.mod.common.api.Priority;
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.api.events.CobblemonEvents;
-import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.battles.actor.PlayerBattleActor;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.pokemon.Pokemon;
@@ -28,6 +27,7 @@ import dev.elrol.arrow.commands.menus.daycare.PokeSelect2;
 import dev.elrol.arrow.commands.menus.shops.ItemSelectMenu;
 import dev.elrol.arrow.commands.menus.shops.ItemShopMenu;
 import dev.elrol.arrow.commands.registries.CommandsMenuItems;
+import dev.elrol.arrow.commands.registries.CrateRegistry;
 import dev.elrol.arrow.commands.registries.KitRegistry;
 import dev.elrol.arrow.data.PlayerData;
 import dev.elrol.arrow.data.PlayerDataCore;
@@ -66,10 +66,8 @@ public class ArrowCommands implements ModInitializer {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(CommandsConstants.MODID);
     public static CommandConfig CONFIG = new CommandConfig();
-    public Timer timer;
-
-    static {
-    }
+    public static final CommandsMenuItems MENU_ITEMS = new CommandsMenuItems();
+    public static Timer timer;
 
     @Override
     public void onInitialize() {
@@ -88,16 +86,22 @@ public class ArrowCommands implements ModInitializer {
             assert ctx.player() != null;
             return PlaceholderResult.value(PermUtils.getMetaData(ctx.player()).getMetaValue("name", (s -> s)).orElse(ctx.player().getName().getString()));
         });
-        Placeholders.register(Identifier.of("arrow","staff_prefix"), (ctx, arg) -> PlaceholderResult.value(PermUtils.getMetaData(ctx.player()).getMetaValue("staff_prefix", (s -> s)).orElse("")));
+    Placeholders.register(Identifier.of("arrow","staff_prefix"), (ctx, arg) -> PlaceholderResult.value(PermUtils.getMetaData(ctx.player()).getMetaValue("staff_prefix", (s -> s)).orElse("")));
         Placeholders.register(Identifier.of("arrow","donor_prefix"), (ctx, arg) -> PlaceholderResult.value(PermUtils.getMetaData(ctx.player()).getMetaValue("donor_prefix", (s -> s)).orElse("")));
     }
 
     private void registerEvents() {
         IEventRegistry eventRegistry = ArrowCore.INSTANCE.getEventRegistry();
 
+        MenuCloseCallback.EVENT.register((player) -> {
+            CrateRegistry.grantRewards(player);
+            return ActionResult.PASS;
+        });
+
         eventRegistry.registerEvent(() -> ServerLifecycleEvents.SERVER_STARTED.register((server) -> {
-            CommandsMenuItems.register();
+            MENU_ITEMS.register();
             registerMenus();
+            CrateRegistry.register(server);
         }));
 
         eventRegistry.registerEvent(() -> CobblemonEvents.BATTLE_VICTORY.subscribe(Priority.NORMAL, (event)-> {
@@ -198,9 +202,10 @@ public class ArrowCommands implements ModInitializer {
             return true;
         }));
 
-        eventRegistry.registerEvent(() -> RefreshCallback.EVENT.register(() -> {
+        eventRegistry.registerEvent(() -> RefreshCallback.EVENT.register((server) -> {
             CONFIG = CONFIG.load();
-            KitRegistry.load();
+            KitRegistry.load(server);
+            CrateRegistry.register(server);
             return ActionResult.PASS;
         }));
 
@@ -278,7 +283,7 @@ public class ArrowCommands implements ModInitializer {
         })));
 
         eventRegistry.registerEvent(() -> ServerLifecycleEvents.SERVER_STARTED.register((server)->{
-            KitRegistry.load();
+            KitRegistry.load(server);
 
             timer = new Timer();
             timer.schedule(new TimerTask() {
@@ -365,6 +370,7 @@ public class ArrowCommands implements ModInitializer {
         menuRegistry.registerMenu("shopping_cart", ShoppingCartMenu.class);
         menuRegistry.registerMenu("item_select", ItemSelectMenu.class);
         menuRegistry.registerMenu("item_shop", ItemShopMenu.class);
+        menuRegistry.registerMenu("crate", CrateMenu.class);
 
     }
 
@@ -376,6 +382,7 @@ public class ArrowCommands implements ModInitializer {
         commandRegistry.registerCommand(new BackCommand());
         commandRegistry.registerCommand(new BalanceCommand());
         commandRegistry.registerCommand(new BalTopCommand());
+        commandRegistry.registerCommand(new CrateCommand());
         commandRegistry.registerCommand(new DaycareCommand());
         commandRegistry.registerCommand(new DelHomeCommand());
         commandRegistry.registerCommand(new DelWarpCommand());

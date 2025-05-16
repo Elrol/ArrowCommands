@@ -1,0 +1,39 @@
+{
+  "id": "arrowcommands:vote_crate",
+  "itemResource": {
+    "models": {
+      "default": "arrowcommands:item/custom/crates/vote_crate"
+    }
+  },
+  "block": "minecraft:barrier",
+  "properties": {
+    "rotate": false,
+    "placement": {
+      "wall": false,
+      "floor": true,
+      "ceiling": false
+    },
+    "glow": false,
+    "solid": true,
+    "display": "fixed",
+    "blockBase": "minecraft:bedrock",
+    "useItemParticles": true,
+    "showBreakParticles": true
+  },
+  "behaviour": {
+    "animation": {
+      "model": "arrowcommands:crate",
+      "autoplay": "idle"
+    },
+    "lock": {
+      "discard": false,
+      "command": "crate vote"
+    }
+  },
+  "blocks": [
+    {
+      "origin": [0,0,0],
+      "size": [1,1,1]
+    }
+  ]
+}

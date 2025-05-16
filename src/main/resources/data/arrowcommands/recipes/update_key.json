@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "arrowcommands:vote_key"
+    }
+  ],
+  "result": {
+    "id": "arrowcrates:vote_key",
+    "count": 1
+  }
+}

@@ -19,6 +19,6 @@
     "minecraft": "1.21.1",
     "cobblemon": ">=1.6.0",
     "luckperms": ">=5.4",
-    "arrowcore": ">=1.5.0"
+    "arrowcore": ">=1.6.0"
   }
 }

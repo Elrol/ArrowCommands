@@ -1,10 +1,9 @@
 package dev.elrol.arrow.commands.registries;
 
+import dev.elrol.arrow.api.registries.IItemRegistry;
 import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
 
-public class CommandsMenuItems {
+public class CommandsMenuItems implements IItemRegistry {
     
     public static Item GRAY_BUTTON;
     public static Item GRAY_BUTTON_LEFT;
@@ -55,8 +54,11 @@ public class CommandsMenuItems {
     //Shop
     public static Item CART_BUTTON;
 
+    //Crates
+    public static Item VOTE_CRATE;
+    public static Item VOTE_KEY;
 
-    public static void register(){
+    public void register(){
 
         GRAY_BUTTON                 = get("gray_button");
         GRAY_BUTTON_LEFT            = get("gray_button_left");
@@ -106,10 +108,15 @@ public class CommandsMenuItems {
 
         //Shop
         CART_BUTTON                 = get("cart_button");
+
+        //Crates
+        VOTE_CRATE                  = get("vote_crate");
+        VOTE_KEY                    = get("vote_key");
     }
-    
-    private static Item get(String id) {
-        return Registries.ITEM.get(Identifier.of("arrowcommands", id));
+
+    @Override
+    public String getModID() {
+        return "arrowcommands";
     }
-    
+
 }

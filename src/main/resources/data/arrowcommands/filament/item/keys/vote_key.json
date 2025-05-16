@@ -1,0 +1,9 @@
+{
+  "id": "arrowcommands:vote_key",
+  "vanillaItem": "minecraft:paper",
+  "itemResource":{
+    "models": {
+      "default": "arrowcommands:item/custom/keys/vote_key"
+    }
+  }
+}

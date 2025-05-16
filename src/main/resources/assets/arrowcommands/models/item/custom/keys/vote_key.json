@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "arrowcommands:item/custom/keys/vote_key"
+  }
+}

@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "dev.elrol.arrow"
-version = "1.5.5"
+version = "1.6.3"
 
 architectury {
     platformSetupLoomIde()
@@ -50,7 +50,7 @@ dependencies {
     modImplementation("net.fabricmc:fabric-language-kotlin:1.12.3+kotlin.2.0.21")
     modImplementation("eu.pb4:sgui:1.6.1+1.21.1")
     modImplementation("com.cobblemon:fabric:1.6.0+1.21.1-SNAPSHOT")
-    modImplementation(files("libs/ArrowCore-1.5.3.jar"))
+    modImplementation(files("libs/ArrowCore-1.6.1.jar"))
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")

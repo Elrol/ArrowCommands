@@ -9,7 +9,6 @@ import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.api.registries.IEconomyRegistry;
 import dev.elrol.arrow.commands._CommandBase;
 import dev.elrol.arrow.commands.commands.suggestions.CurrencySuggestionProvider;
-import dev.elrol.arrow.data.Account;
 import dev.elrol.arrow.data.Currency;
 import dev.elrol.arrow.libs.ModTranslations;
 import dev.elrol.arrow.libs.PermUtils;
@@ -147,7 +146,6 @@ public class EcoCommand extends _CommandBase {
     }
 
     private int set(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
-        ServerPlayerEntity sender = getPlayer(context);
         Collection<ServerPlayerEntity> players = EntityArgumentType.getPlayers(context, "players");
         IEconomyRegistry economyRegistry = ArrowCore.INSTANCE.getEconomyRegistry();
         String id = StringArgumentType.getString(context, "currency");
@@ -156,27 +154,22 @@ public class EcoCommand extends _CommandBase {
 
         if(currency == null) return 0;
 
-        if(sender != null) {
-            players.forEach(player -> economyRegistry.changeAccount(player.getUuid(), currency, (account) -> {
-                account.setBalance(BigDecimal.valueOf(amount));
-                String formattedAmount = economyRegistry.formatAmount(amount, currency);
+        players.forEach(player -> economyRegistry.changeAccount(player.getUuid(), currency, (account) -> {
+            account.setBalance(BigDecimal.valueOf(amount));
+            String formattedAmount = economyRegistry.formatAmount(amount, currency);
 
-                player.sendMessage(ModTranslations.msg("new_balance_1")
-                                .append(economyRegistry.getAmount(amount, currency))
-                                .append(ModTranslations.msg("new_balance_2")));
+            player.sendMessage(ModTranslations.msg("new_balance_1")
+                            .append(economyRegistry.getAmount(amount, currency))
+                            .append(ModTranslations.msg("new_balance_2")));
 
-                sender.sendMessage(ModTranslations.msg("gave_money", formattedAmount, player.getName().getString()));
-                return account;
-            }));
-        } else {
-            context.getSource().sendError(ModTranslations.err("not_player"));
-            return 0;
-        }
+            context.getSource().sendMessage(ModTranslations.msg("gave_money", formattedAmount, player.getName().getString()));
+            return account;
+        }));
+
         return 1;
     }
 
     private int add(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
-        ServerPlayerEntity sender = getPlayer(context);
         Collection<ServerPlayerEntity> players = EntityArgumentType.getPlayers(context, "players");
         IEconomyRegistry economyRegistry = ArrowCore.INSTANCE.getEconomyRegistry();
         String id = StringArgumentType.getString(context, "currency");
@@ -185,30 +178,24 @@ public class EcoCommand extends _CommandBase {
 
         if(currency == null) return 0;
 
-        if(sender != null) {
-            players.forEach(player -> economyRegistry.changeAccount(player.getUuid(), currency, (account) -> {
-                account.deposit(BigDecimal.valueOf(amount));
-                String formattedAmount = economyRegistry.formatAmount(amount, currency);
+        players.forEach(player -> economyRegistry.changeAccount(player.getUuid(), currency, (account) -> {
+            account.deposit(BigDecimal.valueOf(amount));
+            String formattedAmount = economyRegistry.formatAmount(amount, currency);
 
-                player.sendMessage(ModTranslations.msg("got_money_1")
-                        .append(economyRegistry.getAmount(amount, currency))
-                        .append(ModTranslations.msg("got_money_2"))
-                        .append(economyRegistry.getAmount(account.getBalance()))
-                        .append(ModTranslations.msg("got_money_3"))
-                );
+            player.sendMessage(ModTranslations.msg("got_money_1")
+                    .append(economyRegistry.getAmount(amount, currency))
+                    .append(ModTranslations.msg("got_money_2"))
+                    .append(economyRegistry.getAmount(account.getBalance()))
+                    .append(ModTranslations.msg("got_money_3"))
+            );
 
-                sender.sendMessage(ModTranslations.msg("gave_money", formattedAmount, player.getName().getString()));
-                return account;
-            }));
-        } else {
-            context.getSource().sendError(ModTranslations.err("not_player"));
-            return 0;
-        }
+            context.getSource().sendMessage(ModTranslations.msg("gave_money", formattedAmount, player.getName().getString()));
+            return account;
+        }));
         return 1;
     }
 
     private int remove(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
-        ServerPlayerEntity sender = getPlayer(context);
         Collection<ServerPlayerEntity> players = EntityArgumentType.getPlayers(context, "players");
         IEconomyRegistry economyRegistry = ArrowCore.INSTANCE.getEconomyRegistry();
         String id = StringArgumentType.getString(context, "currency");
@@ -217,25 +204,20 @@ public class EcoCommand extends _CommandBase {
 
         if(currency == null) return 0;
 
-        if(sender != null) {
-            players.forEach(player -> economyRegistry.changeAccount(player.getUuid(), currency, (account) -> {
-                account.withdraw(BigDecimal.valueOf(amount));
-                String formattedAmount = economyRegistry.formatAmount(amount, currency);
-                player.sendMessage(ModTranslations.err("lost_money_1")
-                        .append(economyRegistry.getAmount(amount))
-                        .append(ModTranslations.err("lost_money_2"))
-                        .append(economyRegistry.getAmount(account.getBalance()))
-                        .append(ModTranslations.err("lost_money_3"))
-                );
-                        //, formattedAmount, economyRegistry.formatAmount(account.getBalance(), currency)));
+        players.forEach(player -> economyRegistry.changeAccount(player.getUuid(), currency, (account) -> {
+            account.withdraw(BigDecimal.valueOf(amount));
+            String formattedAmount = economyRegistry.formatAmount(amount, currency);
+            player.sendMessage(ModTranslations.err("lost_money_1")
+                    .append(economyRegistry.getAmount(amount))
+                    .append(ModTranslations.err("lost_money_2"))
+                    .append(economyRegistry.getAmount(account.getBalance()))
+                    .append(ModTranslations.err("lost_money_3"))
+            );
+                    //, formattedAmount, economyRegistry.formatAmount(account.getBalance(), currency)));
 
-                sender.sendMessage(ModTranslations.msg("removed_money", formattedAmount, player.getName().getString()));
-                return account;
-            }));
-        } else {
-            context.getSource().sendError(ModTranslations.err("not_player"));
-            return 0;
-        }
+            context.getSource().sendMessage(ModTranslations.msg("removed_money", formattedAmount, player.getName().getString()));
+            return account;
+        }));
         return 1;
     }
 }

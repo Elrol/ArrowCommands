@@ -1,4 +1,8 @@
 {
+  "item.arrowcommands.vote_key":      "Vote Crate Key",
+  "block.arrowcommands.vote_crate":   "Vote Crate",
+
+
   "arrow.info.species":           "Species : ",
   "arrow.info.gender":            "Gender  : ",
   "arrow.info.ability":           "Ability : ",
@@ -31,6 +35,9 @@
   "arrow.error.lost_money_1":           "You have lost ",
   "arrow.error.lost_money_2":           " you now have ",
   "arrow.error.lost_money_3":           "!",
+  "arrow.error.no_key_1":               "You are missing the ",
+  "arrow.error.no_key_2":               " key!",
+  "arrow.error.missing_crate":          "The crate %1$s can't be found.",
 
   "arrow.message.back_welcome":         "Welcome Back!",
   "arrow.message.home_deleted":         "Your home %1$s has been deleted.",
