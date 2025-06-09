@@ -20,18 +20,13 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.commands.ArrowCommands;
-import dev.elrol.arrow.commands.data.PlayerDataCommands;
-import dev.elrol.arrow.data.PlayerData;
 import dev.elrol.arrow.libs.*;
-import dev.elrol.arrow.registries.ModPlayerDataRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Formatting;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileWriter;
 import java.util.*;
 
 public class DaycareUtils {
@@ -44,13 +39,6 @@ public class DaycareUtils {
         if(FabricLoader.getInstance().isDevelopmentEnvironment()) {
             ArrowCommands.LOGGER.warn("Species 1: {}", firstPoke.getSpecies().getName());
             ArrowCommands.LOGGER.warn("Species 2: {}", secondPoke.getSpecies().getName());
-        }
-        PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
-        PlayerDataCommands commandData = data.get(new PlayerDataCommands());
-
-        if(!commandData.daycareData.isBreeding()) {
-            int secondsToHatch = Math.round(ArrowCommands.CONFIG.daycareSettings.minutesToHatchEgg * 60.0f);
-            commandData.daycareData.setTime(secondsToHatch);
         }
 
         PokemonProperties egg = new PokemonProperties();
@@ -127,26 +115,6 @@ public class DaycareUtils {
 
         JsonUtils.saveToJson(Constants.ARROW_DATA_DIR, "test.json", json.getOrThrow());
         return egg;
-    }
-
-    public static Timer startTimer(ServerPlayerEntity player) {
-        PlayerDataCommands commandData = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid()).get(new PlayerDataCommands());
-
-        TimerTask task = new TimerTask(){
-            @Override
-            public void run() {
-                commandData.daycareData.tickTime();
-                if(commandData.daycareData.getTime() == 0) {
-                    player.sendMessage(ModTranslations.msg("egg_ready").formatted(Formatting.BOLD));
-                }
-            }
-        };
-
-        Timer timer = new Timer();
-
-        timer.schedule(task, 0, 1000);
-
-        return timer;
     }
 
     public static boolean canPokemonBreed(Pokemon pokemon1, Pokemon pokemon2) {

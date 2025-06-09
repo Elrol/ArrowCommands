@@ -5,6 +5,7 @@ import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.commands.ArrowCommands;
 import dev.elrol.arrow.commands._CommandBase;
 import dev.elrol.arrow.commands.data.PlayerDataCommands;
+import dev.elrol.arrow.commands.menus.DaycareMenu;
 import dev.elrol.arrow.data.PlayerData;
 import dev.elrol.arrow.data.PlayerDataCore;
 import dev.elrol.arrow.libs.ModTranslations;
@@ -35,7 +36,7 @@ public class DaycareCommand extends _CommandBase {
 
                         coreData.menuHistory.clear();
 
-                        _MenuBase menu = ArrowCore.INSTANCE.getMenuRegistry().createMenu("daycare", player);
+                        DaycareMenu menu = (DaycareMenu) ArrowCore.INSTANCE.getMenuRegistry().createMenu("daycare", player);
                         if(menu == null) {
                             ArrowCommands.LOGGER.error("Menu for Daycare failed to create");
                             return 0;

@@ -1,19 +1,18 @@
 package dev.elrol.arrow.commands.menus;
 
+import com.cobblemon.mod.common.item.PokemonItem;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.commands.ArrowCommands;
 import dev.elrol.arrow.commands.libs.DaycareUtils;
 import dev.elrol.arrow.commands.registries.CommandsMenuItems;
+import dev.elrol.arrow.data.PlayerDataCore;
 import dev.elrol.arrow.libs.*;
-import dev.elrol.arrow.registries.CoreMenuItems;
 import eu.pb4.sgui.api.elements.GuiElementBuilder;
-import net.fabricmc.fabric.api.util.TriState;
-import net.fabricmc.loader.api.FabricLoader;
-import net.luckperms.api.util.Tristate;
-import net.minecraft.item.Items;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
@@ -34,6 +33,7 @@ public class DaycareMenu extends _CommandMenuBase {
         super.open();
         if(commandData.daycareData.isBreeding()) {
             if(ArrowCore.CONFIG.isDebug) ArrowCommands.LOGGER.warn("Daycare Time Left: {}", commandData.daycareData.getTime());
+            boolean hasMenu = daycareMenus.containsKey(player.getUuid());
             daycareMenus.put(player.getUuid(), this);
         }
     }
@@ -53,7 +53,28 @@ public class DaycareMenu extends _CommandMenuBase {
 
         GuiElementBuilder slot1Element = MenuUtils.item(CommandsMenuItems.SLOT_ONE_BUTTON, 1, "spot_one");
         GuiElementBuilder slot2Element = MenuUtils.item(CommandsMenuItems.SLOT_TWO_BUTTON, 1, "spot_two");
+
         hatcheryElement = MenuUtils.item(CommandsMenuItems.NEST_BUTTON, 1, "hatchery");
+
+        if(slot1 > -1) {
+            if(ArrowCore.CONFIG.isDebug) ArrowCore.LOGGER.warn("Slot1 was greater than 0");
+            Pokemon pokemon1 = CobblemonUtils.getSlot(player, slot1);
+            if(pokemon1 != null) {
+                slot1Element = new GuiElementBuilder(PokemonItem.from(pokemon1));
+                slot1Element.setName(pokemon1.getNickname() == null ? pokemon1.getDisplayName() : pokemon1.getNickname());
+                CobblemonUtils.addPokeStatElement(slot1Element, pokemon1);
+            }
+        }
+
+        if(slot2 > -1) {
+            if(ArrowCore.CONFIG.isDebug) ArrowCore.LOGGER.warn("Slot2 was greater than 0");
+            Pokemon pokemon2 = CobblemonUtils.getSlot(player, slot2);
+            if(pokemon2 != null) {
+                slot2Element = new GuiElementBuilder(PokemonItem.from(pokemon2));
+                slot2Element.setName(pokemon2.getNickname() == null ? pokemon2.getDisplayName() : pokemon2.getNickname());
+                CobblemonUtils.addPokeStatElement(slot2Element,pokemon2);
+            }
+        }
 
         slot1Element.setCallback(() -> {
             click();
@@ -64,37 +85,8 @@ public class DaycareMenu extends _CommandMenuBase {
             navigateToMenu("pokeselect_2");
         });
 
-        if(slot1 > -1) {
-            if(ArrowCore.CONFIG.isDebug) ArrowCore.LOGGER.warn("Slot1 was greater than 0");
-            Pokemon pokemon1 = CobblemonUtils.getSlot(player, slot1);
-            if(pokemon1 != null) {
-                slot1Element.setItem(Items.SNOWBALL);
-                slot1Element.setName(pokemon1.getNickname() == null ? pokemon1.getDisplayName() : pokemon1.getNickname());
-                CobblemonUtils.addPokeStatElement(slot1Element, pokemon1);
-                slot1Element.setCustomModelData(Constants.getPokeballID(pokemon1.getCaughtBall()));
-                setSlot(21, slot1Element.build());
-            } else {
-                setSlot(21, slot1Element);
-            }
-        } else {
-            setSlot(21, slot1Element);
-        }
-
-        if(slot2 > -1) {
-            if(ArrowCore.CONFIG.isDebug) ArrowCore.LOGGER.warn("Slot2 was greater than 0");
-            Pokemon pokemon2 = CobblemonUtils.getSlot(player, slot2);
-            if(pokemon2 != null) {
-                slot2Element.setItem(Items.SNOWBALL);
-                slot2Element.setName(pokemon2.getNickname() == null ? pokemon2.getDisplayName() : pokemon2.getNickname());
-                CobblemonUtils.addPokeStatElement(slot2Element,pokemon2);
-                slot2Element.setCustomModelData(Constants.getPokeballID(pokemon2.getCaughtBall()));
-                setSlot(23, slot2Element.build());
-            } else {
-                setSlot(23, slot2Element);
-            }
-        } else {
-            setSlot(23, slot2Element);
-        }
+        setSlot(21, slot1Element);
+        setSlot(23, slot2Element);
 
         setHatchery();
 
@@ -105,42 +97,40 @@ public class DaycareMenu extends _CommandMenuBase {
             if(poke1 != null && poke2 != null && DaycareUtils.canPokemonBreed(poke1, poke2) && !commandData.daycareData.isBreeding()) {
                 click();
                 daycareMenus.put(player.getUuid(), this);
-                commandData.daycareData.setTime((int)(ArrowCommands.CONFIG.daycareSettings.minutesToHatchEgg * 60.0f));
-                commandData.daycareData.setEgg(DaycareUtils.breed(player, poke1, poke2), player);
-                setHatchery();
+                commandData.daycareData.setEgg(DaycareUtils.breed(player, poke1, poke2));
+                data.put(commandData);
+                drawMenu();
             }
         }));
     }
 
-    public TriState tickEgg() {
-        TriState state = commandData.daycareData.tickTime();
-        data.put(commandData);
-        setHatchery();
-        return state;
+    public void tickMenu() {
+        boolean ready = commandData.daycareData.isReadyToHatch();
+        UUID uuid = player.getUuid();
+
+        if(ready) {
+        } else {
+
+        }
     }
 
-    private void setHatchery() {
-        boolean isBreeding = commandData.daycareData.isBreeding();
+    public void setHatchery() {
         boolean isReady = commandData.daycareData.isReadyToHatch();
 
         if(isReady) {
-            hatcheryElement.setItem(Items.SNOWBALL);
             Pokemon egg = commandData.daycareData.getEgg();
-            CobblemonUtils.addPokeStatElement(hatcheryElement, egg);
             assert egg != null;
-            int modelData = Constants.getPokeballID(egg.getCaughtBall());
+            hatcheryElement = MenuUtils.itemStack(PokemonItem.from(egg, 1), "hatchery");
+            CobblemonUtils.addPokeStatElement(hatcheryElement, egg);
             hatcheryElement.setCallback(() -> {
                 click();
                 commandData.daycareData.hatchEgg(player);
                 data.put(commandData);
-                setHatchery();
+                ArrowCore.INSTANCE.getPlayerDataRegistry().save(player.getUuid(), data);
+                drawMenu();
             });
 
-            if (ArrowCore.CONFIG.isDebug) {
-                hatcheryElement.addLoreLine(Text.literal("" + modelData));
-            }
-
-            menu.setSlot(19, hatcheryElement.setCustomModelData(modelData));
+            menu.setSlot(19, hatcheryElement);
         } else {
             if(ArrowCore.CONFIG.isDebug)
                 CobblemonUtils.addPokeStatElement(hatcheryElement, commandData.daycareData.getEgg());

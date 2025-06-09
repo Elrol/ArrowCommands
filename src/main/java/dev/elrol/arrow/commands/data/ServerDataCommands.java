@@ -24,11 +24,11 @@ public class ServerDataCommands implements IServerData {
 
     static {
         CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                ExactLocation.CODEC.fieldOf("spawnLocation").forGetter(data -> data.spawnLocation),
+                ExactLocation.CODEC.optionalFieldOf("spawnLocation").forGetter(data -> java.util.Optional.ofNullable(data.spawnLocation)),
                 Codec.unboundedMap(Codec.STRING, ExactLocation.CODEC).fieldOf("warpLocations").forGetter(data -> data.warpLocations)
         ).apply(instance, (spawnLocation, warpLocations) -> {
             ServerDataCommands data = new ServerDataCommands();
-            data.spawnLocation = spawnLocation;
+            data.spawnLocation = spawnLocation.orElse(null);
             data.warpLocations.putAll(warpLocations);
             return data;
         }));

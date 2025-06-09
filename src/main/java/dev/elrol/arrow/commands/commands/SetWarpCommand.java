@@ -38,7 +38,7 @@ public class SetWarpCommand extends _CommandBase {
         String name = StringArgumentType.getString(context, "name");
         if(player != null) {
             IServerDataRegistry registry = ArrowCore.INSTANCE.getServerDataRegistry();
-            ServerDataCommands commandData = registry.get(ServerDataCommands.class);
+            ServerDataCommands commandData = registry.get(new ServerDataCommands());
             commandData.addWarp(player, name);
             registry.put(commandData, true);
 

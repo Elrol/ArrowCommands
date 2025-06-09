@@ -30,7 +30,7 @@ public class DelWarpCommand extends _CommandBase {
 
     private static int oneArgs(CommandContext<ServerCommandSource> context) {
         String name = StringArgumentType.getString(context, "name");
-        ServerDataCommands data = ArrowCore.INSTANCE.getServerDataRegistry().get(ServerDataCommands.class);
+        ServerDataCommands data = ArrowCore.INSTANCE.getServerDataRegistry().get(new ServerDataCommands());
         if(data.removeWarp(name)) {
             context.getSource().sendMessage(ModTranslations.msg("warp_delete_1")
                     .append(Text.literal(name).formatted(Formatting.AQUA))

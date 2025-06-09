@@ -10,6 +10,8 @@ import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.Style;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 
 public class DiscordCommand extends _CommandBase {
 
@@ -18,7 +20,7 @@ public class DiscordCommand extends _CommandBase {
         root = dispatcher.register(CommandManager.literal("discord")
                 .executes(context -> {
                     String link = ArrowCommands.CONFIG.discordLink;
-                    context.getSource().sendMessage(ModTranslations.msg("discord_ip", link).setStyle(Style.EMPTY.withItalic(false).withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, link))));
+                    context.getSource().sendMessage(ModTranslations.msg("discord_ip").formatted(Formatting.GREEN).append(Text.literal(link).setStyle(Style.EMPTY.withItalic(false).withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, link)).withFormatting(Formatting.BLUE))));
                     return 1;
                 }).requires((source)->{
                     if(source.isExecutedByPlayer() && source.getPlayer() != null) {

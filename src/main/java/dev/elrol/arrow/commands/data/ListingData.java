@@ -14,16 +14,16 @@ public class ListingData {
     static {
         CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ItemStack.CODEC.fieldOf("item").forGetter(data -> data.item),
-                Codec.DOUBLE.fieldOf("pricePerUnit").forGetter(data -> data.pricePerUnit),
+                Codec.INT.fieldOf("pricePerUnit").forGetter(data -> data.pricePerUnit),
                 Codec.INT.fieldOf("units").forGetter(data -> data.units)
         ).apply(instance, ListingData::new));
     }
 
     ItemStack item;
-    double pricePerUnit;
+    int pricePerUnit;
     int units;
 
-    public ListingData(ItemStack item, double pricePerUnit, int units) {
+    public ListingData(ItemStack item, int pricePerUnit, int units) {
         this.item = item;
         this.pricePerUnit = pricePerUnit;
         this.units = units;
@@ -44,11 +44,11 @@ public class ListingData {
         if(units < 0) units = 0;
     }
 
-    public double getPricePerUnit() {
+    public int getPricePerUnit() {
         return pricePerUnit;
     }
 
-    public double getTotalPrice() {
+    public int getTotalPrice() {
         return pricePerUnit * units;
     }
 

@@ -1,15 +1,15 @@
-package dev.elrol.arrow.commands.menus;
+package dev.elrol.arrow.commands.menus.shops;
 
 import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.api.registries.IEconomyRegistry;
 import dev.elrol.arrow.commands.data.ListingData;
+import dev.elrol.arrow.commands.menus._CommandPageMenuBase;
 import dev.elrol.arrow.commands.registries.CommandsMenuItems;
 import dev.elrol.arrow.libs.MenuUtils;
 import dev.elrol.arrow.libs.ModTranslations;
 import eu.pb4.sgui.api.elements.GuiElementBuilder;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -58,11 +58,14 @@ public class ShoppingCartMenu extends _CommandPageMenuBase {
         String totalString = "- " + economyRegistry.formatAmount(total);
 
         List<Text> lore = new ArrayList<>();
-        lore.add(ModTranslations.literal(balString).formatted(loreFormat));
-        lore.add(ModTranslations.literal(totalString).formatted(loreFormat));
-        lore.add(ModTranslations.literal("─".repeat(Math.max(balString.length(), totalString.length()))).formatted(Formatting.GRAY));
-        lore.add(ModTranslations.literal("  " + economyRegistry.formatAmount(balance.subtract(BigDecimal.valueOf(total)))).formatted(loreFormat));
-
+        if(canConfirm) {
+            lore.add(ModTranslations.literal(balString).formatted(loreFormat));
+            lore.add(ModTranslations.literal(totalString).formatted(loreFormat));
+            lore.add(ModTranslations.literal("─".repeat(Math.max(balString.length(), totalString.length()))).formatted(Formatting.GRAY));
+            lore.add(ModTranslations.literal("  " + economyRegistry.formatAmount(balance.subtract(BigDecimal.valueOf(total)))).formatted(loreFormat));
+        } else {
+            lore.add(ModTranslations.literal("< Empty Cart >").formatted(Formatting.DARK_GRAY));
+        }
         return MenuUtils.item(flag ? button : disabledButton, 1, ModTranslations.translate("arrow.menu.shop.cart.confirm").formatted (flag ? Formatting.GREEN : Formatting.DARK_GRAY)).setCallback(() -> {
             if(!flag) return;
             click();
@@ -74,7 +77,7 @@ public class ShoppingCartMenu extends _CommandPageMenuBase {
 
     private GuiElementBuilder cancel(Item button, Item disabledButton){
         boolean isCartEmpty = commandData.shoppingData.shoppingCart.isEmpty();
-        return MenuUtils.item(isCartEmpty ? disabledButton : button, 1, "clear_cart").setCallback(() -> {
+        return MenuUtils.item(isCartEmpty ? disabledButton : button, 1, ModTranslations.translate("arrow.menu.shop.cart.clear_cart").formatted(isCartEmpty ? Formatting.DARK_GRAY : Formatting.DARK_RED)).setCallback(() -> {
             if(isCartEmpty) return;
             click();
             commandData.shoppingData.shoppingCart.clear();
@@ -114,6 +117,6 @@ public class ShoppingCartMenu extends _CommandPageMenuBase {
 
     @Override
     public int getLastPage() {
-        return Math.floorDiv(commandData.shoppingData.shoppingCart.size(),15);
+        return Math.floorDiv(commandData.shoppingData.shoppingCart.size(), 15);
     }
 }

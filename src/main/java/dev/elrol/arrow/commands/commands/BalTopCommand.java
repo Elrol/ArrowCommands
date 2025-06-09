@@ -72,12 +72,20 @@ public class BalTopCommand extends _CommandBase {
         List<UUID> uuidList = economyRegistry.getTopBalances(currency);
         MutableText text = Text.literal("Top Balances:").formatted(Formatting.GREEN);
 
+        int place = 1;
         for (UUID uuid : uuidList) {
             BigDecimal bal = economyRegistry.getBal(uuid, currency);
             PlayerDataCore coreData = playerDataRegistry.getPlayerData(uuid).get(new PlayerDataCore());
-            text.append("\n   ");
-            text.append(coreData.username.equals(Text.empty()) ? Text.literal(uuid.toString()) : coreData.username);
+            MutableText name = coreData.username.equals(Text.empty()) ? Text.literal(uuid.toString()) : MutableText.of(coreData.username.getContent());
+
+            text.append("\n");
+            text.append(Text.literal("  [").formatted(Formatting.DARK_GRAY));
+            text.append(Text.literal(String.valueOf(place)).formatted(Formatting.GRAY));
+            text.append(Text.literal(place < 10 ? "]  " : "] ").formatted(Formatting.DARK_GRAY));
+            text.append(name.formatted(Formatting.DARK_GREEN));
             text.append(": ").append(economyRegistry.getAmount(bal, currency));
+
+            place++;
         }
 
         source.sendMessage(text);

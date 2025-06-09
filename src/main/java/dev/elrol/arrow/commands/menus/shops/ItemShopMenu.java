@@ -27,9 +27,13 @@ public class ItemShopMenu extends _CommandPageMenuBase {
     }
 
     @Override
-    protected void drawMenu() {
-        super.drawMenu();
+    public void open() {
+        super.open();
+        ArrowCommands.LOGGER.error("Page Number: {}", page);
+    }
 
+    @Override
+    protected void drawMenu() {
         shopName = commandData.shoppingData.shop;
         if(shopName.isEmpty()) {
             ArrowCommands.LOGGER.error("Shop Name was missing");
@@ -63,6 +67,8 @@ public class ItemShopMenu extends _CommandPageMenuBase {
             }
         }
 
+        super.drawMenu();
+
         drawItems(items);
 
         setSlot(0, MenuUtils.item(CommandsMenuItems.CART_BUTTON, 1, ModTranslations.translate("arrow.menu.shop.cart").formatted(Formatting.GREEN, Formatting.BOLD)).setCallback(() -> {
@@ -91,9 +97,10 @@ public class ItemShopMenu extends _CommandPageMenuBase {
     protected <T> GuiElementBuilder createElement(String key, Map<String, T> map) {
         CommandConfig.ShopItem shopItem = ((Map<String, CommandConfig.ShopItem>) map).get(key);
         ItemStack item = shopItem.item;
-        GuiElementBuilder in = MenuUtils.itemStack(item.copyWithCount(1), item.getName().getString());
-        in.setCustomModelData((shopItems.shopID * 1000000) + (getMenuID() * 1000) + Integer.parseInt(key));
+        GuiElementBuilder in = MenuUtils.itemStack(item.copyWithCount(1), item.getName());
+        //in.setCustomModelData((shopItems.shopID * 1000000) + (getMenuID() * 1000) + Integer.parseInt(key));
 
+        in.addLoreLine(ModTranslations.literal(ArrowCore.INSTANCE.getEconomyRegistry().formatAmount(shopItem.cost)).formatted(Formatting.GREEN));
         return in.setCallback(() -> {
             click();
             commandData.shoppingData.currentCart = new ListingData(item, shopItem.cost, 0);
@@ -105,6 +112,8 @@ public class ItemShopMenu extends _CommandPageMenuBase {
 
     @Override
     public int getLastPage() {
-        return Math.floorDiv(items.size(),15);
+        if(ArrowCore.CONFIG.isDebug)
+            ArrowCommands.LOGGER.error("Items Size is: {}", items.size());
+        return Math.floorDiv(items.size(), 15);
     }
 }

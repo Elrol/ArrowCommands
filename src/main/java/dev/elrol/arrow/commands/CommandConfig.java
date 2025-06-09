@@ -13,6 +13,8 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.CustomModelDataComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.text.Text;
+import net.minecraft.text.TextCodecs;
 import net.minecraft.util.Formatting;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
@@ -219,12 +221,14 @@ public class CommandConfig extends _BaseConfig {
         static {
             CODEC = RecordCodecBuilder.create(instance -> instance.group(
                     Codec.INT.fieldOf("shopID").forGetter(data -> data.shopID),
+                    TextCodecs.CODEC.fieldOf("name").forGetter(data -> data.name),
                     Formatting.CODEC.fieldOf("color").forGetter(data -> data.color),
                     ItemStack.CODEC.fieldOf("shopIcon").forGetter(data -> data.shopIcon),
                     ShopItem.CODEC.listOf().fieldOf("itemShop").forGetter(data -> data.itemShop)
-            ).apply(instance, (shopID, color, shopIcon, itemShop) -> {
+            ).apply(instance, (shopID, name, color, shopIcon, itemShop) -> {
                 ShopItems data = new ShopItems();
                 data.shopID = shopID;
+                data.name = name;
                 data.color = color;
                 data.shopIcon = shopIcon;
                 data.itemShop = new ArrayList<>(itemShop);
@@ -233,6 +237,7 @@ public class CommandConfig extends _BaseConfig {
         }
 
         public int shopID = 0;
+        public Text name = Text.literal("Example").formatted(Formatting.RED);
         public Formatting color = Formatting.GOLD;
         public ItemStack shopIcon = new ItemStack(Items.DIAMOND, 1);
         public List<ShopItem> itemShop = new ArrayList<>();
@@ -250,19 +255,19 @@ public class CommandConfig extends _BaseConfig {
         static {
             CODEC = RecordCodecBuilder.create(instance -> instance.group(
                     ItemStack.CODEC.fieldOf("item").forGetter(data -> data.item),
-                    Codec.FLOAT.fieldOf("cost").forGetter(data -> data.cost)
+                    Codec.INT.fieldOf("cost").forGetter(data -> data.cost)
             ).apply(instance, CommandConfig.ShopItem::new));
         }
 
         public ItemStack item;
-        public float cost;
+        public int cost;
 
         public ShopItem() {
             item = new ItemStack(Items.DIAMOND);
             cost = 100000;
         }
 
-        public ShopItem(ItemStack item, float cost) {
+        public ShopItem(ItemStack item, int cost) {
             this.item = item;
             this.cost = cost;
         }

@@ -63,9 +63,7 @@ public class ShopMenu extends _CommandPageMenuBase {
         GuiElementBuilder in = MenuUtils.itemStack(shopItems.shopIcon, key);
         int modelData = (shopItems.shopID * 1000000) + (getMenuID() * 1000);
         in.setCustomModelData(modelData);
-        in.setName(
-                ModTranslations.translateFallback("arrow.menu.shop.name." + key.toLowerCase().replace(" ", "_"), key)
-                        .formatted(shopItems.color, Formatting.BOLD));
+        in.setName(shopItems.name);
 
         if(ArrowCore.CONFIG.isDebug)
             in.addLoreLine(ModTranslations.translate("arrow.menu.item.model_data", modelData).formatted(Formatting.RED));

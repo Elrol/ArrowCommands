@@ -60,7 +60,7 @@ public class RTPCommand extends _CommandBase {
             ExactLocation location = new ExactLocation(world, (double)pos.getX() + 0.5d, (double)pos1.getY() + 0.5d, (double)pos.getZ() + 0.5d, 0.0f, 0.0f);
             coreData.logTeleport(player);
             location.teleport(player);
-            player.sendMessage(ModTranslations.msg("rtp_success"));
+            player.sendMessage(ModTranslations.msg("rtp_success", count));
             PermUtils.getUser(player).data().add(
                     Node.builder("arrow.command.rtp")
                             .value(false)

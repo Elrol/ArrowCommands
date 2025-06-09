@@ -19,7 +19,7 @@ public class WarpSuggestionProvider implements SuggestionProvider<ServerCommandS
     public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
         ServerPlayerEntity player = context.getSource().getPlayer();
         if(player != null) {
-            ServerDataCommands commandData = ArrowCore.INSTANCE.getServerDataRegistry().get(ServerDataCommands.class);
+            ServerDataCommands commandData = ArrowCore.INSTANCE.getServerDataRegistry().get(new ServerDataCommands());
             for(String warp : commandData.getWarpsNames()) {
                 if(PermUtils.hasPerm(player, "arrow.warp", warp).asBoolean()) {
                     builder.suggest(warp);

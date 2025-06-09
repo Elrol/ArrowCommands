@@ -6,8 +6,8 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import dev.elrol.arrow.commands.data.KitData;
-import dev.elrol.arrow.libs.Constants;
 import dev.elrol.arrow.libs.JsonUtils;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.RegistryOps;
@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class KitRegistry {
-    private static final File dir = new File(Constants.ARROW_DATA_DIR, "/kits");
+    private static final File dir = new File(FabricLoader.getInstance().getConfigDir().toFile(), "/Arrow/Kits");
 
     private static final Map<String, KitData> kitMap = new HashMap<>();
 

@@ -1,6 +1,7 @@
 package dev.elrol.arrow.commands.menus.shops;
 
 import dev.elrol.arrow.ArrowCore;
+import dev.elrol.arrow.api.registries.IEconomyRegistry;
 import dev.elrol.arrow.commands.ArrowCommands;
 import dev.elrol.arrow.commands.data.ListingData;
 import dev.elrol.arrow.commands.data.ShoppingData;
@@ -13,7 +14,6 @@ import eu.pb4.sgui.api.elements.GuiElementBuilder;
 import net.minecraft.item.Item;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
@@ -33,9 +33,15 @@ public class ItemSelectMenu extends _CommandMenuBase {
     protected void drawMenu() {
         super.drawMenu();
         ListingData listingData = shoppingData.currentCart;
+
         if(!listingData.isEmpty()) {
             int current = listingData.getUnits();
-            shopItemElement = MenuUtils.itemStack(listingData.getItem(), listingData.getItem().getName()).addLoreLine(ModTranslations.translate("arrow.menu.shop.select.amount").formatted( Formatting.GREEN).append(ModTranslations.literal (" " + current).formatted(Formatting.GRAY)));
+
+            shopItemElement = MenuUtils.itemStack(
+                    listingData.getItem(),
+                    listingData.getItem().getName());
+            shopItemElement.addLoreLine(ModTranslations.translate("arrow.menu.shop.select.amount").formatted( Formatting.GREEN).append(ModTranslations.literal (" " + current).formatted(Formatting.GRAY)));
+            shopItemElement.addLoreLine(ModTranslations.translate("arrow.menu.shop.select.cost").formatted(Formatting.GREEN).append(ModTranslations.literal(" " + listingData.getPriceString()).formatted(Formatting.GRAY)));
 
             setSlot(18, changeAmount(CommandsMenuItems.RED_BUTTON_4, listingData, -64));
             setSlot(19, changeAmount(CommandsMenuItems.RED_BUTTON_3, listingData, -16));
@@ -60,6 +66,8 @@ public class ItemSelectMenu extends _CommandMenuBase {
     public GuiElementBuilder changeAmount(Item item, ListingData listingData, int amount) {
         boolean isPositive = amount > 0;
         Formatting format = (isPositive ? Formatting.GREEN : Formatting.RED);
+        int targetAmount = Math.max(listingData.getUnits() + amount, 0);
+        IEconomyRegistry econRegistry = ArrowCore.INSTANCE.getEconomyRegistry();
 
         GuiElementBuilder element = MenuUtils.item(item, 1, ModTranslations.literal((isPositive ? "+" : "") + amount).formatted(format, Formatting.BOLD)).setCallback(()->{
             listingData.changeUnits(amount);
@@ -69,10 +77,8 @@ public class ItemSelectMenu extends _CommandMenuBase {
             drawMenu();
         });
 
-        element.addLoreLine(
-                Text.literal(listingData.getUnits() + " ─> " + Math.max(listingData.getUnits() + amount, 0))
-                        .setStyle(Style.EMPTY.withItalic(false).withFormatting(format))
-        );
+        element.addLoreLine(ModTranslations.literal(listingData.getUnits() + " ─> " + targetAmount).formatted(format));
+        element.addLoreLine(ModTranslations.literal(listingData.getPriceString() + " -> " + econRegistry.formatAmount(listingData.getPricePerUnit() * targetAmount)).formatted(format));
 
         return element;
     }
@@ -90,8 +96,8 @@ public class ItemSelectMenu extends _CommandMenuBase {
         int units = commandData.shoppingData.currentCart.getUnits();
         boolean flag = units > 0;
         return MenuUtils.item((flag ? item : disabled), 1, ModTranslations.translate("arrow.menu.shop.select.add").formatted(Formatting.BOLD, (flag ? Formatting.GREEN : Formatting.DARK_GRAY)))
-                .addLoreLine(ModTranslations.translate("arrow.menu.shop.select.amount").append(Text.literal(" " + units)))
-                .addLoreLine(ModTranslations.literal(listingData.getPriceString()).formatted((flag ? Formatting.DARK_GREEN : Formatting.DARK_GRAY)))
+                .addLoreLine(ModTranslations.translate("arrow.menu.shop.select.amount").formatted(Formatting.GREEN).append(ModTranslations.literal (" " + units).formatted(Formatting.GRAY)))
+                .addLoreLine(ModTranslations.translate("arrow.menu.shop.select.cost").formatted(Formatting.GREEN).append(ModTranslations.literal(" " + listingData.getPriceString()).formatted(Formatting.GRAY)))
                 .setCallback(() -> {
                     if(!flag) return;
                     commandData.shoppingData.confirmCurrentCart();

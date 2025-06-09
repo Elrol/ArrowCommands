@@ -28,7 +28,7 @@ public class WarpCommand extends _CommandBase {
     private int oneArgs(CommandContext<ServerCommandSource> context) {
         ServerPlayerEntity player = getPlayer(context);
         String warpName = StringArgumentType.getString(context, "name");
-        ServerDataCommands data = ArrowCore.INSTANCE.getServerDataRegistry().get(ServerDataCommands.class);
+        ServerDataCommands data = ArrowCore.INSTANCE.getServerDataRegistry().get(new ServerDataCommands());
 
         if(player != null) {
             if(!PermUtils.hasPerm(player, "arrow.warp", warpName).asBoolean()) {

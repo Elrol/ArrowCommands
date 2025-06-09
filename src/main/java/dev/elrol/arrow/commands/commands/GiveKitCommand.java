@@ -11,7 +11,6 @@ import dev.elrol.arrow.commands.data.KitData;
 import dev.elrol.arrow.commands.data.PlayerDataCommands;
 import dev.elrol.arrow.commands.registries.KitRegistry;
 import dev.elrol.arrow.data.PlayerData;
-import dev.elrol.arrow.libs.ModTranslations;
 import dev.elrol.arrow.libs.PermUtils;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.EntityArgumentType;
@@ -19,8 +18,8 @@ import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.List;
 
 public class GiveKitCommand extends _CommandBase {
     @Override
@@ -51,7 +50,7 @@ public class GiveKitCommand extends _CommandBase {
             PlayerDataCommands commandData = data.get(new PlayerDataCommands());
             kit.giveKit(player);
             if(kit.cooldown > 0 || kit.oneTimeUse) {
-                commandData.kitCooldownMap.put(ID, kit.cooldown);
+                commandData.kitTimeStamps.put(ID, LocalDateTime.now());
                 data.put(commandData);
             }
         });

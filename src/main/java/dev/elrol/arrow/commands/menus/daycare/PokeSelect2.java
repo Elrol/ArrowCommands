@@ -1,6 +1,7 @@
 package dev.elrol.arrow.commands.menus.daycare;
 
 import com.cobblemon.mod.common.api.storage.party.PlayerPartyStore;
+import com.cobblemon.mod.common.item.PokemonItem;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.commands.ArrowCommands;
@@ -67,9 +68,8 @@ public class PokeSelect2 extends _CommandMenuBase {
                     if(!DaycareUtils.canPokemonBreed(slot1, slot)) continue;
                 }
 
-                GuiElementBuilder element = new GuiElementBuilder(Items.SNOWBALL, 1)
+                GuiElementBuilder element = new GuiElementBuilder(PokemonItem.from(slot))
                         .setName(slot.getNickname() == null ? slot.getDisplayName() : slot.getNickname())
-                        .setCustomModelData(Constants.getPokeballID(slot.getCaughtBall()))
                         .setCallback(() -> {
                             click();
                             commandData.daycareData.slot2 = slotIndex;

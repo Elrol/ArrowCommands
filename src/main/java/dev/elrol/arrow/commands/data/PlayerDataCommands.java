@@ -5,7 +5,9 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.api.data.IPlayerData;
+import dev.elrol.arrow.codecs.ArrowCodecs;
 import dev.elrol.arrow.data.ExactLocation;
+import dev.elrol.arrow.data.PlayerData;
 import dev.elrol.arrow.data.PlayerDataCore;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.bson.codecs.jsr310.LocalDateTimeCodec;
@@ -13,6 +15,7 @@ import org.bson.codecs.jsr310.LocalDateTimeCodec;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class PlayerDataCommands implements IPlayerData {
 
@@ -20,16 +23,22 @@ public class PlayerDataCommands implements IPlayerData {
 
     static {
         CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            DaycareData.CODEC.fieldOf("daycareData").forGetter(data -> data.daycareData),
-            Codec.unboundedMap(Codec.STRING, ExactLocation.CODEC).fieldOf("homes").forGetter(data -> data.homes),
-            ShoppingData.CODEC.fieldOf("shoppingData").forGetter(data -> data.shoppingData),
-            Codec.unboundedMap(Codec.STRING, Codec.INT).fieldOf("kitCooldownMap").forGetter(data -> data.kitCooldownMap)
-        ).apply(instance, (daycareData, homes, shoppingData, kitCooldownMap) -> {
+                DaycareData.CODEC.fieldOf("daycareData").forGetter(data -> data.daycareData),
+                Codec.unboundedMap(Codec.STRING, ExactLocation.CODEC).fieldOf("homes").forGetter(data -> data.homes),
+                ShoppingData.CODEC.fieldOf("shoppingData").forGetter(data -> data.shoppingData),
+                OnTimeData.CODEC.optionalFieldOf("onTimeData").forGetter(data -> Optional.ofNullable(data.onTimeData)),
+                Codec.unboundedMap(Codec.STRING, Codec.INT).optionalFieldOf("kitCooldownMap").forGetter(data -> Optional.empty()),
+                Codec.unboundedMap(Codec.STRING, ArrowCodecs.DATE_TIME_CODEC).optionalFieldOf("kitTimeStamps").forGetter(data -> {
+                    Map<String, LocalDateTime> map = data.kitTimeStamps;
+                    return Optional.ofNullable(map);
+                })
+        ).apply(instance, (daycareData, homes, shoppingData, onTimeData, kitCooldownMap,kitTimeStamps) -> {
             PlayerDataCommands data = new PlayerDataCommands();
             data.daycareData = daycareData;
             data.homes = new HashMap<>(homes);
             data.shoppingData = shoppingData;
-            data.kitCooldownMap.putAll(kitCooldownMap);
+            onTimeData.ifPresent(a -> data.onTimeData = a);
+            kitTimeStamps.ifPresent(map -> data.kitTimeStamps.putAll(map));
             return data;
         }));
     }
@@ -37,8 +46,8 @@ public class PlayerDataCommands implements IPlayerData {
     public DaycareData daycareData = new DaycareData();
     public ShoppingData shoppingData = new ShoppingData();
     public Map<String, ExactLocation> homes = new HashMap<>();
-    public LocalDateTime lastOnline;
-    public Map<String, Integer> kitCooldownMap = new HashMap<>();
+    public OnTimeData onTimeData = new OnTimeData();
+    public Map<String, LocalDateTime> kitTimeStamps = new HashMap<>();
 
     public boolean goHome(String home, ServerPlayerEntity player) {
         if(!homes.containsKey(home)) {
@@ -66,11 +75,13 @@ public class PlayerDataCommands implements IPlayerData {
     }
 
     public boolean goBack(ServerPlayerEntity player){
-        PlayerDataCore data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player).get(new PlayerDataCore());
-        if(data.teleportHistory.isEmpty()) return false;
+        PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
+        PlayerDataCore coreData = data.get(new PlayerDataCore());
+        if(coreData.teleportHistory.isEmpty()) return false;
 
-        data.teleportHistory.getFirst().teleport(player, false);
-        data.teleportHistory.removeFirst();
+        coreData.teleportHistory.getFirst().teleport(player, false);
+        coreData.teleportHistory.removeFirst();
+        data.put(coreData);
         return true;
     }
 

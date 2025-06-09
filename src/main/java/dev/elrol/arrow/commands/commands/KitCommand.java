@@ -8,6 +8,7 @@ import dev.elrol.arrow.commands._CommandBase;
 import dev.elrol.arrow.commands.commands.suggestions.KitSuggestionProvider;
 import dev.elrol.arrow.commands.data.KitData;
 import dev.elrol.arrow.commands.data.PlayerDataCommands;
+import dev.elrol.arrow.commands.libs.DateTimeUtils;
 import dev.elrol.arrow.commands.registries.KitRegistry;
 import dev.elrol.arrow.data.PlayerData;
 import dev.elrol.arrow.libs.ModTranslations;
@@ -16,6 +17,9 @@ import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 public class KitCommand extends _CommandBase {
     @Override
@@ -40,16 +44,25 @@ public class KitCommand extends _CommandBase {
             KitData kit = KitRegistry.get(ID);
 
             if(kit == null || !kit.hasPermission(player)) return 0;
+            if(commandData.kitTimeStamps.containsKey(ID)) {
+                if(kit.oneTimeUse) {
+                    player.sendMessage(ModTranslations.err("kit_claimed"));
+                    return 0;
+                }
 
-            if(commandData.kitCooldownMap.containsKey(ID)) {
-                player.sendMessage(ModTranslations.err(kit.oneTimeUse ? "kit_claimed" : "kit_on_cooldown", commandData.kitCooldownMap.get(ID)));
-                return 0;
+                LocalDateTime cooldownOver = commandData.kitTimeStamps.get(ID).plusSeconds(kit.cooldown);
+                LocalDateTime now = LocalDateTime.now();
+                if (cooldownOver.isAfter(now)) {
+                    LocalDateTime time = commandData.kitTimeStamps.get(ID).plusSeconds(kit.cooldown);
+
+                    player.sendMessage(ModTranslations.err(kit.oneTimeUse ? "kit_claimed" : "kit_on_cooldown", DateTimeUtils.formatDateTime(now.until(time, ChronoUnit.SECONDS))));
+                    return 0;
+                }
             }
-
 
             kit.giveKit(player);
             if(kit.cooldown > 0 || kit.oneTimeUse) {
-                commandData.kitCooldownMap.put(ID, kit.cooldown);
+                commandData.kitTimeStamps.put(ID, LocalDateTime.now());
                 data.put(commandData);
             }
         } else {

@@ -15,9 +15,7 @@ import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.api.events.*;
 import dev.elrol.arrow.api.registries.*;
 import dev.elrol.arrow.commands.commands.*;
-import dev.elrol.arrow.commands.data.KitData;
-import dev.elrol.arrow.commands.data.OldPlayerData;
-import dev.elrol.arrow.commands.data.PlayerDataCommands;
+import dev.elrol.arrow.commands.data.*;
 import dev.elrol.arrow.commands.libs.CommandsConstants;
 import dev.elrol.arrow.commands.libs.SilkTouchUtils;
 import dev.elrol.arrow.commands.libs.SpawnerUtils;
@@ -41,8 +39,8 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.fabricmc.fabric.api.util.TriState;
 import net.fabricmc.loader.api.FabricLoader;
+import net.luckperms.api.cacheddata.CachedMetaData;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.MobSpawnerBlockEntity;
@@ -51,6 +49,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.HoverEvent;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
@@ -59,6 +62,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -67,7 +72,7 @@ public class ArrowCommands implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger(CommandsConstants.MODID);
     public static CommandConfig CONFIG = new CommandConfig();
     public static final CommandsMenuItems MENU_ITEMS = new CommandsMenuItems();
-    public static Timer timer;
+    public static final Timer TIMER = new Timer();
 
     @Override
     public void onInitialize() {
@@ -86,22 +91,84 @@ public class ArrowCommands implements ModInitializer {
             assert ctx.player() != null;
             return PlaceholderResult.value(PermUtils.getMetaData(ctx.player()).getMetaValue("name", (s -> s)).orElse(ctx.player().getName().getString()));
         });
-    Placeholders.register(Identifier.of("arrow","staff_prefix"), (ctx, arg) -> PlaceholderResult.value(PermUtils.getMetaData(ctx.player()).getMetaValue("staff_prefix", (s -> s)).orElse("")));
-        Placeholders.register(Identifier.of("arrow","donor_prefix"), (ctx, arg) -> PlaceholderResult.value(PermUtils.getMetaData(ctx.player()).getMetaValue("donor_prefix", (s -> s)).orElse("")));
+
+        Placeholders.register(Identifier.of("arrow","staff_prefix"), (ctx, arg) -> {
+            CachedMetaData meta = PermUtils.getMetaData(ctx.player());
+            MutableText prefix = Text.literal(meta.getMetaValue("staff_prefix", (s -> s)).orElse(""));
+            HoverEvent hover = new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(meta.getMetaValue("staff_name", (s) -> s).orElse("")));
+            prefix.setStyle(prefix.getStyle().withHoverEvent(hover));
+            return PlaceholderResult.value(prefix);
+        });
+
+        Placeholders.register(Identifier.of("arrow","donor_prefix"), (ctx, arg) -> {
+            CachedMetaData meta = PermUtils.getMetaData(ctx.player());
+            MutableText prefix = Text.literal(meta.getMetaValue("donor_prefix", (s -> s)).orElse(""));
+            HoverEvent hover = new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(meta.getMetaValue("donor_name", (s) -> s).orElse("")));
+            prefix.setStyle(prefix.getStyle().withHoverEvent(hover));
+            return PlaceholderResult.value(prefix);
+        });
+
+        Placeholders.register(Identifier.of("arrow","rank_prefix"), (ctx, arg) -> {
+            CachedMetaData meta = PermUtils.getMetaData(ctx.player());
+            MutableText prefix = Text.literal(meta.getMetaValue("rank_prefix", (s -> s)).orElse(""));
+            HoverEvent hover = new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(meta.getMetaValue("rank_name", (s) -> s).orElse("")));
+            prefix.setStyle(prefix.getStyle().withHoverEvent(hover));
+            return PlaceholderResult.value(prefix);
+        });
     }
 
     private void registerEvents() {
         IEventRegistry eventRegistry = ArrowCore.INSTANCE.getEventRegistry();
 
-        MenuCloseCallback.EVENT.register((player) -> {
-            CrateRegistry.grantRewards(player);
-            return ActionResult.PASS;
-        });
-
         eventRegistry.registerEvent(() -> ServerLifecycleEvents.SERVER_STARTED.register((server) -> {
             MENU_ITEMS.register();
+            KitRegistry.load(server);
             registerMenus();
             CrateRegistry.register(server);
+
+            TIMER.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    if(ArrowCore.CONFIG.isDebug) LOGGER.warn("Daycare Timer Tick");
+                    final Map<UUID, DaycareMenu> daycareMenus = DaycareMenu.daycareMenus;
+                    daycareMenus.forEach((uuid, menu) -> {
+                        try {
+                            if(menu == null) return;
+                            menu.setHatchery();
+                        } catch(Exception e) {
+                            LOGGER.error(e.getLocalizedMessage());
+                        }
+                    });
+
+                    ArrowCore.INSTANCE.getPlayerDataRegistry().getLoadedData().forEach((uuid, data) -> {
+                        try {
+                            PlayerDataCommands commandData = data.get(new PlayerDataCommands());
+                            ServerPlayerEntity player = server.getPlayerManager().getPlayer(uuid);
+                            if (player == null || commandData.daycareData.getTime() != 0)
+                                return;
+                            player.sendMessage(ModTranslations.msg("egg_ready"));
+                            player.playSoundToPlayer(SoundEvents.ENTITY_FIREWORK_ROCKET_TWINKLE, SoundCategory.MASTER, 1.0f, 1.0f);
+                        } catch(Exception e) {
+                            LOGGER.error(e.getLocalizedMessage());
+                        }
+                    });
+                }
+            }, 1000, 1000);
+
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime tomorrow = LocalDateTime.of(now.toLocalDate().plusDays(1), LocalTime.MIDNIGHT);
+
+            TIMER.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    server.getPlayerManager().getPlayerList().forEach(player -> {
+                        PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
+                        PlayerDataCommands commandData = data.get(new PlayerDataCommands());
+                        commandData.onTimeData.logTime();
+                        data.put(commandData, true);
+                    });
+                }
+            }, now.until(tomorrow, ChronoUnit.MILLIS), 86400000);
         }));
 
         eventRegistry.registerEvent(() -> CobblemonEvents.BATTLE_VICTORY.subscribe(Priority.NORMAL, (event)-> {
@@ -222,11 +289,12 @@ public class ArrowCommands implements ModInitializer {
             }
 
             KitData starterKit = KitRegistry.get("starter");
-            if(starterKit != null && !commandData.kitCooldownMap.containsKey("starter")) {
+            if(starterKit != null && !commandData.kitTimeStamps.containsKey("starter")) {
                 starterKit.giveKit(player);
 
                 if(starterKit.cooldown > 0 || starterKit.oneTimeUse) {
-                    commandData.kitCooldownMap.put(starterKit.id, starterKit.cooldown);
+                    final LocalDateTime now = LocalDateTime.now();
+                    commandData.kitTimeStamps.put(starterKit.id, now);
                 }
             }
 
@@ -236,10 +304,12 @@ public class ArrowCommands implements ModInitializer {
                 LOGGER.warn("Command Data Loaded for {}", player.getUuid());
         }));
 
+        eventRegistry.registerEvent(() -> ArrowEvents.SERVER_DATA_LOADED_EVENT.register((serverData) -> {
+            ServerDataCommands serverDataCommands = serverData.get(new ServerDataCommands());
+        }));
+
         eventRegistry.registerEvent(() -> ArrowEvents.PLAYER_DATA_UNLOADING_EVENT.register((serverPlayerEntity, data) -> {
-            PlayerDataCommands commandData = data.get(new PlayerDataCommands());
-            commandData.lastOnline = LocalDateTime.now();
-            data.put(commandData);
+
         }));
 
         eventRegistry.registerEvent(() -> ArrowEvents.CONFIG_LOADED_EVENT.register(() -> {
@@ -273,86 +343,39 @@ public class ArrowCommands implements ModInitializer {
             }
         }));
 
-        eventRegistry.registerEvent(() ->ServerPlayConnectionEvents.JOIN.register((network, sender, server) -> {
-            ServerPlayerEntity player = network.player;
-            //PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
+        eventRegistry.registerEvent(() -> ServerPlayConnectionEvents.JOIN.register((network, sender, server) -> {
+            PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(network.player);
+            PlayerDataCommands commandData = data.get(new PlayerDataCommands());
+            if(commandData.onTimeData == null) commandData.onTimeData = new OnTimeData();
+            commandData.onTimeData.updateLastOnline();
+            data.put(commandData);
         }));
 
-        eventRegistry.registerEvent(() -> ServerPlayConnectionEvents.DISCONNECT.register(((handler, server) -> {
-            DaycareMenu.daycareMenus.remove(handler.player.getUuid());
+        eventRegistry.registerEvent(() -> ServerPlayConnectionEvents.DISCONNECT.register(((network, server) -> {
+            ServerPlayerEntity player = network.player;
+            DaycareMenu.daycareMenus.remove(player.getUuid());
+
+            PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
+            PlayerDataCommands commandData = data.get(new PlayerDataCommands());
+            commandData.onTimeData.logTime();
+            data.put(commandData);
         })));
 
-        eventRegistry.registerEvent(() -> ServerLifecycleEvents.SERVER_STARTED.register((server)->{
-            KitRegistry.load(server);
-
-            timer = new Timer();
-            timer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    List<UUID> uuidsToRemove = new ArrayList<>();
-                    DaycareMenu.daycareMenus.forEach((uuid, menu)-> {
-                        TriState state;
-                        if(menu == null) {
-                            PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(uuid);
-                            PlayerDataCommands commandData = data.get(new PlayerDataCommands());
-
-                            state = commandData.daycareData.tickTime();
-                            data.put(commandData);
-                        } else {
-                            state = menu.tickEgg();
-                        }
-
-                        if(state.equals(TriState.TRUE)) {
-                            uuidsToRemove.add(uuid);
-                            ServerPlayerEntity player = server.getPlayerManager().getPlayer(uuid);
-                            if(player != null) player.sendMessage(ModTranslations.msg("egg_ready"));
-                        }
-                    });
-
-                    uuidsToRemove.forEach(DaycareMenu.daycareMenus::remove);
-                }
-            }, 1000, 1000);
-
-            timer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    IPlayerDataRegistry playerDataRegistry = ArrowCore.INSTANCE.getPlayerDataRegistry();
-                    server.getPlayerManager().getPlayerList().forEach(player -> {
-                        PlayerData data = playerDataRegistry.getPlayerData(player);
-                        PlayerDataCommands commandData = data.get(new PlayerDataCommands());
-
-                        Map<String, Integer> tempMap = new HashMap<>(commandData.kitCooldownMap);
-                        commandData.kitCooldownMap.forEach((id, cooldown) -> {
-                            KitData kit = KitRegistry.get(id);
-                            if(kit == null || kit.oneTimeUse) return;
-                            int left = cooldown - 1;
-                            if(left > 0) {
-                                tempMap.put(id, left);
-                            } else {
-                                player.sendMessage(ModTranslations.msg("kit_ready", kit.name.getString()));
-                                tempMap.remove(id);
-                            }
-                        });
-
-                        if(ArrowCore.CONFIG.isDebug)
-                            ArrowCommands.LOGGER.warn("Kit Timer Ran");
-
-                        commandData.kitCooldownMap.clear();
-                        commandData.kitCooldownMap.putAll(tempMap);
-                        data.put(commandData);
-                    });
-
-                }
-            }, 60000, 60000);
-        }));
-
         eventRegistry.registerEvent(() -> ServerLifecycleEvents.SERVER_STOPPING.register((server) -> {
-            if(timer != null) timer.cancel();
+            TIMER.cancel();
         }));
 
         eventRegistry.registerEvent(() -> MenuCloseCallback.EVENT.register((player) -> {
-            if(DaycareMenu.daycareMenus.containsKey(player.getUuid()))
-                DaycareMenu.daycareMenus.put(player.getUuid(), null);
+            if(DaycareMenu.daycareMenus.containsKey(player.getUuid())) {
+                PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
+                PlayerDataCommands commandData = data.get(new PlayerDataCommands());
+
+                commandData.daycareData.clearSlots();
+                data.put(commandData);
+
+                DaycareMenu.daycareMenus.remove(player.getUuid());
+            }
+            CrateRegistry.grantRewards(player);
             return ActionResult.PASS;
         }));
     }
@@ -367,7 +390,7 @@ public class ArrowCommands implements ModInitializer {
         menuRegistry.registerMenu("main", MainMenu.class);
         menuRegistry.registerMenu("settings", SettingsMenu.class);
         menuRegistry.registerMenu("shop", ShopMenu.class);
-        menuRegistry.registerMenu("shopping_cart", ShoppingCartMenu.class);
+        menuRegistry.registerMenu("shopping_cart", dev.elrol.arrow.commands.menus.shops.ShoppingCartMenu.class);
         menuRegistry.registerMenu("item_select", ItemSelectMenu.class);
         menuRegistry.registerMenu("item_shop", ItemShopMenu.class);
         menuRegistry.registerMenu("crate", CrateMenu.class);
@@ -404,6 +427,13 @@ public class ArrowCommands implements ModInitializer {
         commandRegistry.registerCommand(new TpaCommand());
         commandRegistry.registerCommand(new TpaHereCommand());
         commandRegistry.registerCommand(new WarpCommand());
+
+        commandRegistry.registerCommand(new PhotoCommand());
+        commandRegistry.registerCommand(new PayCommand());
+
+        commandRegistry.registerCommand(new AFKCommand());
+        commandRegistry.registerCommand(new OnTimeCommand());
+        commandRegistry.registerCommand(new SeenCommand());
     }
 
 }

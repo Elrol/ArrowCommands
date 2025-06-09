@@ -28,7 +28,7 @@ public class SetSpawnCommand extends _CommandBase {
         ServerPlayerEntity player = getPlayer(context);
         if(player != null) {
             IServerDataRegistry serverData = ArrowCore.INSTANCE.getServerDataRegistry();
-            ServerDataCommands serverDataCommands = serverData.get(ServerDataCommands.class);
+            ServerDataCommands serverDataCommands = serverData.get(new ServerDataCommands());
             serverDataCommands.setSpawnLocation(player);
             serverData.put(serverDataCommands, true);
 
