@@ -1,0 +1,9 @@
+{
+  "id": "arrowcommands:light_gray_button_middle",
+  "vanillaItem": "minecraft:paper",
+  "itemResource":{
+    "models": {
+      "default": "arrowcommands:item/gui/button/light_gray_button_middle"
+    }
+  }
+}

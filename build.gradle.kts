@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "dev.elrol.arrow"
-version = "1.6.19"
+version = "1.7.0"
 
 architectury {
     platformSetupLoomIde()
@@ -45,12 +45,12 @@ dependencies {
     modImplementation("eu.pb4:polymer-core:0.9.18+1.21.1")
     modImplementation("eu.pb4:polymer-resource-pack:0.9.18+1.21.1")
     modImplementation("eu.pb4:polymer-autohost:0.9.18+1.21.1")
-    modImplementation("de.tomalbrc:filament:0.14.4+1.21.1")
+    modImplementation("de.tomalbrc:filament:0.14.7+1.21.1")
 
     modImplementation("net.fabricmc:fabric-language-kotlin:1.12.3+kotlin.2.0.21")
     modImplementation("eu.pb4:sgui:1.6.1+1.21.1")
     modImplementation("com.cobblemon:fabric:1.6.0+1.21.1-SNAPSHOT")
-    modImplementation(files("libs/ArrowCore-1.6.9.jar"))
+    modImplementation(files("libs/ArrowCore-1.7.6.jar"))
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")

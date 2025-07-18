@@ -20,5 +20,8 @@
     "cobblemon": ">=1.6.0",
     "luckperms": ">=5.4",
     "arrowcore": ">=1.6.0"
-  }
+  },
+  "mixins": [
+    "arrowcommands.mixins.json"
+  ]
 }

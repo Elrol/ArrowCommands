@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:smithing_transform",
+  "addition": {
+    "item": "minecraft:redstone"
+  },
+  "base": {
+    "item": "minecraft:netherite_pickaxe"
+  },
+  "result": {
+    "count": 1,
+    "id": "arrowcommands:red_diamond_pickaxe"
+  },
+  "template": {
+    "item": "arrowcommands:red_gear_smithing_template"
+  }
+}

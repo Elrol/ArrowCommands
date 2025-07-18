@@ -1,0 +1,9 @@
+{
+  "id": "arrowcommands:red_diamond_pickaxe",
+  "vanillaItem": "minecraft:diamond_pickaxe",
+  "itemResource":{
+    "models": {
+      "default": "arrowcommands:item/custom/pickaxes/red_pickaxe"
+    }
+  }
+}

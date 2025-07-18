@@ -3,10 +3,10 @@ package dev.elrol.arrow.commands.menus;
 import dev.elrol.arrow.commands.registries.CommandsMenuItems;
 import dev.elrol.arrow.libs.MenuUtils;
 import dev.elrol.arrow.libs.ModTranslations;
-import net.minecraft.item.Items;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import org.jetbrains.annotations.NotNull;
 
 public class ConfirmMenu extends _CommandMenuBase {
     String message = "confirm_message";
@@ -25,14 +25,17 @@ public class ConfirmMenu extends _CommandMenuBase {
 
         Text cancelText = ModTranslations.err(cancel);
         Text confirmText = ModTranslations.msg(confirm);
+        Text messageText = ModTranslations.info(message);
 
         setSlot(19, MenuUtils.item(CommandsMenuItems.RED_BUTTON_LEFT, 1, cancelText).setCallback(this::cancel));
         setSlot(20, MenuUtils.item(CommandsMenuItems.RED_BUTTON_MIDDLE, 1, cancelText).setCallback(this::cancel));
         setSlot(21, MenuUtils.item(CommandsMenuItems.RED_BUTTON_RIGHT, 1, cancelText).setCallback(this::cancel));
 
-        setSlot(23, MenuUtils.item(CommandsMenuItems.RED_BUTTON_LEFT, 1, confirmText).setCallback(this::confirm));
-        setSlot(24, MenuUtils.item(CommandsMenuItems.RED_BUTTON_MIDDLE, 1, confirmText).setCallback(this::confirm));
-        setSlot(25, MenuUtils.item(CommandsMenuItems.RED_BUTTON_RIGHT, 1, confirmText).setCallback(this::confirm));
+        setSlot(23, MenuUtils.item(CommandsMenuItems.LIME_BUTTON_LEFT, 1, confirmText).setCallback(this::confirm));
+        setSlot(24, MenuUtils.item(CommandsMenuItems.LIME_BUTTON_MIDDLE, 1, confirmText).setCallback(this::confirm));
+        setSlot(25, MenuUtils.item(CommandsMenuItems.LIME_BUTTON_RIGHT, 1, confirmText).setCallback(this::confirm));
+
+        setSlot(40, MenuUtils.item(CommandsMenuItems.LIGHT_GRAY_BUTTON, 1, messageText));
     }
 
     @Override
@@ -41,7 +44,7 @@ public class ConfirmMenu extends _CommandMenuBase {
     }
 
     @Override
-    public String getMenuName() {
+    public @NotNull String getMenuName() {
         return "confirm";
     }
 

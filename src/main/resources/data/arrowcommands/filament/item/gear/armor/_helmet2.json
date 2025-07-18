@@ -1,0 +1,61 @@
+{
+  "id": "arrowcommands:rocket_helmet_f",
+  "vanillaItem": "minecraft:paper",
+  "itemTags": [
+    "enchantable/head_armor",
+    "enchantable/armor",
+    "enchantable/durability"
+  ],
+  "itemResource": {
+    "models": {
+      "default": "arrowcommands:item/custom/gear/armor/rocket_helmet"
+    }
+  },
+  "properties": {
+    "fireResistant": true,
+    "durability": 454,
+    "stackSize": 1
+  },
+  "components": {
+    "minecraft:attribute_modifiers": {
+      "modifiers": [
+        {
+          "type": "generic.armor",
+          "amount": 4.0,
+          "operation": "add_value",
+          "slot": "head",
+          "id": "arrow:head"
+        },
+        {
+          "type": "generic.armor_toughness",
+          "amount": 4.0,
+          "operation": "add_value",
+          "slot": "head",
+          "id": "arrow:head"
+        },
+        {
+          "type": "generic.knockback_resistance",
+          "amount": 0.1,
+          "operation": "add_value",
+          "slot": "head",
+          "id": "arrow:head"
+        }
+      ]
+    },
+    "minecraft:damage_resistant": {
+      "types": "#minecraft:is_fire"
+    },
+    "minecraft:rarity": "epic"
+  },
+  "behaviour": {
+    "armor": {
+      "slot": "head"
+    },
+    "enchantable": {
+      "value": 20
+    },
+    "repairable": {
+      "items": ["minecraft:netherite_ingot"]
+    }
+  }
+}

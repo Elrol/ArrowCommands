@@ -10,7 +10,6 @@ import dev.elrol.arrow.data.ExactLocation;
 import dev.elrol.arrow.data.PlayerData;
 import dev.elrol.arrow.data.PlayerDataCore;
 import net.minecraft.server.network.ServerPlayerEntity;
-import org.bson.codecs.jsr310.LocalDateTimeCodec;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -31,14 +30,16 @@ public class PlayerDataCommands implements IPlayerData {
                 Codec.unboundedMap(Codec.STRING, ArrowCodecs.DATE_TIME_CODEC).optionalFieldOf("kitTimeStamps").forGetter(data -> {
                     Map<String, LocalDateTime> map = data.kitTimeStamps;
                     return Optional.ofNullable(map);
-                })
-        ).apply(instance, (daycareData, homes, shoppingData, onTimeData, kitCooldownMap,kitTimeStamps) -> {
+                }),
+                PlayerShopData.CODEC.optionalFieldOf("playerShopData").forGetter(data -> Optional.ofNullable(data.playerShopData))
+        ).apply(instance, (daycareData, homes, shoppingData, onTimeData, kitCooldownMap,kitTimeStamps,playerShopData) -> {
             PlayerDataCommands data = new PlayerDataCommands();
             data.daycareData = daycareData;
             data.homes = new HashMap<>(homes);
             data.shoppingData = shoppingData;
             onTimeData.ifPresent(a -> data.onTimeData = a);
             kitTimeStamps.ifPresent(map -> data.kitTimeStamps.putAll(map));
+            playerShopData.ifPresent(a -> data.playerShopData = a);
             return data;
         }));
     }
@@ -48,6 +49,7 @@ public class PlayerDataCommands implements IPlayerData {
     public Map<String, ExactLocation> homes = new HashMap<>();
     public OnTimeData onTimeData = new OnTimeData();
     public Map<String, LocalDateTime> kitTimeStamps = new HashMap<>();
+    public PlayerShopData playerShopData = new PlayerShopData();
 
     public boolean goHome(String home, ServerPlayerEntity player) {
         if(!homes.containsKey(home)) {

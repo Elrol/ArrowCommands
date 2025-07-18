@@ -1,8 +1,10 @@
 package dev.elrol.arrow.commands.libs;
 
 import com.cobblemon.mod.common.CobblemonItems;
+import com.cobblemon.mod.common.api.Priority;
 import com.cobblemon.mod.common.api.abilities.Ability;
 import com.cobblemon.mod.common.api.abilities.PotentialAbility;
+import com.cobblemon.mod.common.api.abilities.PotentialAbilityType;
 import com.cobblemon.mod.common.api.moves.Move;
 import com.cobblemon.mod.common.api.moves.MoveTemplate;
 import com.cobblemon.mod.common.api.pokeball.PokeBalls;
@@ -241,21 +243,44 @@ public class DaycareUtils {
 
     @Nullable
     private static Ability getEggAbility(Species species, Pokemon firstPoke, Pokemon secondPoke) {
-        Pokemon parent;
-        if(CobblemonUtils.isDitto(firstPoke)) {
+        Pokemon parent = firstPoke;
+        if(CobblemonUtils.isDitto(parent)) {
             if(CobblemonUtils.isDitto(secondPoke)) return null;
             parent = secondPoke;
-        } else if(CobblemonUtils.isDitto(secondPoke)) {
-            parent = firstPoke;
         } else {
-            return null;
+            if(parent.getGender().equals(Gender.MALE)) parent = secondPoke;
         }
-        if(!parent.getSpecies().equals(species)) return null;
 
-        float chance = isHA(parent) ? 0.6f : 0.8f;
+        boolean isHA = isHA(parent);
+        float chance = isHA ? 0.6f : 0.8f;
         float random = rand.nextFloat(0, 1.0F);
 
-        return (chance > random) ? parent.getAbility() : null;
+        Ability ability = null;
+
+        if(isHA) {
+            for (PotentialAbility speciesAbility : species.getAbilities()) {
+                if(speciesAbility.getType().equals(HiddenAbilityType.INSTANCE)) ability = speciesAbility.getTemplate().create(false, Priority.NORMAL);
+            }
+        } else {
+            if(parent.getSpecies().equals(species)) {
+                ability = parent.getAbility();
+            } else {
+                List<PotentialAbility> potAbil = new ArrayList<>();
+                species.getAbilities().forEach(abil -> {
+                    if(abil.getType().equals(HiddenAbilityType.INSTANCE)) {
+                        potAbil.add(abil);
+                    }
+                });
+
+                PotentialAbility potentialAbility = potAbil.getFirst();
+                if(potAbil.size() > 1) {
+                    potentialAbility = potAbil.get(ModUtils.temptFate(0.5f, 0f, 1.0f) ? 0 : 1);
+                }
+                ability = potentialAbility.getTemplate().create(false, Priority.NORMAL);
+            }
+        }
+
+        return (chance > random) ? ability : null;
     }
 
     private static List<MoveTemplate> getEggMoves(Species species, Pokemon poke1, Pokemon poke2) {
@@ -303,7 +328,7 @@ public class DaycareUtils {
     public static boolean isHA(Pokemon pokemon) {
         for (PotentialAbility spAb : pokemon.getForm().getAbilities()) {
             if(pokemon.getAbility().getTemplate().getName().equals(spAb.getTemplate().getName())
-                    && spAb.getType() == HiddenAbilityType.INSTANCE) return true;
+                    && spAb.getType().equals(HiddenAbilityType.INSTANCE)) return true;
         }
         return false;
     }

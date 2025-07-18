@@ -1,1 +1,7 @@
-[]
+[
+  {
+    "id": "arrow:templates",
+    "item": "arrowcommands:rocket_gear_smithing_template",
+    "literal": "<c:aqua>Templates"
+  }
+]

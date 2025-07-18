@@ -22,17 +22,21 @@ public class ListingData {
     ItemStack item;
     int pricePerUnit;
     int units;
+    int maxUnits = 0;
+    int maxStackSize;
 
     public ListingData(ItemStack item, int pricePerUnit, int units) {
         this.item = item;
         this.pricePerUnit = pricePerUnit;
         this.units = units;
+        maxStackSize = item.getMaxCount();
     }
 
     public ListingData() {
         this.item = new ItemStack(Items.BEDROCK);
         this.pricePerUnit = 0;
-        this.units = 0;
+        this.units = 1;
+        maxStackSize = item.getMaxCount();
     }
 
     public void changeUnits(int amount) {
@@ -41,7 +45,8 @@ public class ListingData {
     }
 
     public void checkUnits() {
-        if(units < 0) units = 0;
+        if(units < 1) units = 1;
+        if(units > maxUnits && maxUnits > 0) units = maxUnits;
     }
 
     public int getPricePerUnit() {
@@ -65,8 +70,16 @@ public class ListingData {
         return item;
     }
 
+    public void setMaxUnits(int maxUnits) {
+        this.maxUnits = maxUnits;
+    }
+
+    public void setMaxStackSize(int maxStack) {
+        this.maxStackSize = maxStack;
+    }
+
     public int getMaxStackSize() {
-        return item.getMaxCount();
+        return maxStackSize;
     }
 
     public boolean isEmpty() {

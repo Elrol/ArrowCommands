@@ -17,6 +17,7 @@ import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import org.jetbrains.annotations.NotNull;
 
 public class PokeSelect1 extends _CommandMenuBase {
 
@@ -91,7 +92,7 @@ public class PokeSelect1 extends _CommandMenuBase {
     }
 
     @Override
-    public String getMenuName() {
+    public @NotNull String getMenuName() {
         return "pokeselect_1";
     }
 }

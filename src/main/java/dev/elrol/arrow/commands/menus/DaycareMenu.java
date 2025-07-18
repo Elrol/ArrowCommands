@@ -6,15 +6,13 @@ import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.commands.ArrowCommands;
 import dev.elrol.arrow.commands.libs.DaycareUtils;
 import dev.elrol.arrow.commands.registries.CommandsMenuItems;
-import dev.elrol.arrow.data.PlayerDataCore;
 import dev.elrol.arrow.libs.*;
 import eu.pb4.sgui.api.elements.GuiElementBuilder;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -104,16 +102,6 @@ public class DaycareMenu extends _CommandMenuBase {
         }));
     }
 
-    public void tickMenu() {
-        boolean ready = commandData.daycareData.isReadyToHatch();
-        UUID uuid = player.getUuid();
-
-        if(ready) {
-        } else {
-
-        }
-    }
-
     public void setHatchery() {
         boolean isReady = commandData.daycareData.isReadyToHatch();
 
@@ -158,7 +146,7 @@ public class DaycareMenu extends _CommandMenuBase {
     }
 
     @Override
-    public String getMenuName() {
+    public @NotNull String getMenuName() {
         return "daycare";
     }
 

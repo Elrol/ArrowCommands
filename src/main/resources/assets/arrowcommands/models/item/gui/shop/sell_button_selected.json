@@ -1,0 +1,6 @@
+{
+    "parent": "arrowcore:item/slot",
+    "textures": {
+        "layer0": "arrowcommands:item/gui/shop/sell_button_selected"
+    }
+}

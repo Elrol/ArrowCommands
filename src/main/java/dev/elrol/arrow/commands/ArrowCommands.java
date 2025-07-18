@@ -1,10 +1,12 @@
 package dev.elrol.arrow.commands;
 
+import com.cobblemon.mod.common.CobblemonItems;
 import com.cobblemon.mod.common.api.Priority;
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.api.events.CobblemonEvents;
 import com.cobblemon.mod.common.battles.actor.PlayerBattleActor;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
+import com.cobblemon.mod.common.block.entity.DisplayCaseBlockEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -16,17 +18,19 @@ import dev.elrol.arrow.api.events.*;
 import dev.elrol.arrow.api.registries.*;
 import dev.elrol.arrow.commands.commands.*;
 import dev.elrol.arrow.commands.data.*;
-import dev.elrol.arrow.commands.libs.CommandsConstants;
-import dev.elrol.arrow.commands.libs.SilkTouchUtils;
-import dev.elrol.arrow.commands.libs.SpawnerUtils;
+import dev.elrol.arrow.commands.interfaces.IDisplayShop;
+import dev.elrol.arrow.commands.interfaces.ILockable;
+import dev.elrol.arrow.commands.libs.*;
 import dev.elrol.arrow.commands.menus.*;
+import dev.elrol.arrow.commands.menus.createshop.EditShopMenu;
+import dev.elrol.arrow.commands.menus.createshop.item.ItemShopSetupMenu;
+import dev.elrol.arrow.commands.menus.createshop.pokemon.PokemonShopSetupMenu;
 import dev.elrol.arrow.commands.menus.daycare.PokeSelect1;
 import dev.elrol.arrow.commands.menus.daycare.PokeSelect2;
 import dev.elrol.arrow.commands.menus.shops.ItemSelectMenu;
 import dev.elrol.arrow.commands.menus.shops.ItemShopMenu;
-import dev.elrol.arrow.commands.registries.CommandsMenuItems;
-import dev.elrol.arrow.commands.registries.CrateRegistry;
-import dev.elrol.arrow.commands.registries.KitRegistry;
+import dev.elrol.arrow.commands.menus.shops.ShoppingCartMenu;
+import dev.elrol.arrow.commands.registries.*;
 import dev.elrol.arrow.data.PlayerData;
 import dev.elrol.arrow.data.PlayerDataCore;
 import dev.elrol.arrow.libs.*;
@@ -38,17 +42,20 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
+import net.fabricmc.fabric.api.event.player.UseBlockCallback;
+import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.luckperms.api.cacheddata.CachedMetaData;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.entity.MobSpawnerBlockEntity;
+import net.minecraft.block.entity.*;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.HoverEvent;
@@ -56,6 +63,7 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,11 +128,43 @@ public class ArrowCommands implements ModInitializer {
     private void registerEvents() {
         IEventRegistry eventRegistry = ArrowCore.INSTANCE.getEventRegistry();
 
+        eventRegistry.registerEvent(() -> ServerMessageEvents.ALLOW_CHAT_MESSAGE.register((message, sender, params) -> {
+            PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(sender);
+            PlayerDataCommands commandData = data.get(new PlayerDataCommands());
+            TempShopData shopData = commandData.playerShopData.tempShop;
+            if(shopData == null || !shopData.getStage().equals(TempShopData.ShopStage.price)) return true;
+
+            boolean needsPrice = !shopData.hasPrice();
+
+            if(needsPrice) {
+                String string = message.getContent().getString();
+                if(string.equalsIgnoreCase("cancel")) {
+                    sender.sendMessage(ModTranslations.msg("price_canceled"));
+                    shopData.resetStage();
+                } else {
+                    try {
+                        int price = Integer.parseInt(string);
+                        shopData.shop.setPrice(price);
+                        shopData.resetStage();
+                    } catch (NumberFormatException e) {
+                        sender.sendMessage(ModTranslations.err("invalid_price"));
+                    }
+                }
+                commandData.playerShopData.tempShop = shopData;
+                data.put(commandData);
+                ArrowCore.INSTANCE.getMenuRegistry().createMenu("edit_shop_menu", sender).open();
+                return false;
+            } else {
+                return true;
+            }
+        }));
+
         eventRegistry.registerEvent(() -> ServerLifecycleEvents.SERVER_STARTED.register((server) -> {
             MENU_ITEMS.register();
             KitRegistry.load(server);
             registerMenus();
             CrateRegistry.register(server);
+            ServerShopRegistry.register(server);
 
             TIMER.schedule(new TimerTask() {
                 @Override
@@ -250,29 +290,119 @@ public class ArrowCommands implements ModInitializer {
             if(entity instanceof MobSpawnerBlockEntity spawnerEntity) {
                 player.sendMessage(ModTranslations.msg("placed_spawner"));
                 SpawnerUtils.fromItemStack(spawnerEntity, stack);
+            } else if(entity instanceof DisplayCaseBlockEntity) {
+                PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
+                PlayerDataCommands commandData = data.get(new PlayerDataCommands());
+                TempShopData shopData = commandData.playerShopData.tempShop;
+                if(shopData != null && !shopData.hasDisplayCase() && shopData.getStage().equals(TempShopData.ShopStage.displayCase)) {
+                    shopData.shop.setDisplayCase(pos);
+                    if(entity instanceof IDisplayShop displayShop){
+                        displayShop.arrowcommands$lock();
+                        ArrowCommands.LOGGER.error("Case was Locked");
+                    }
+                    shopData.resetStage();
+                    commandData.playerShopData.tempShop = shopData;
+                    data.put(commandData);
+                    ArrowCore.INSTANCE.getMenuRegistry().createMenu("edit_shop_menu", player).open();
+                }
             }
         }));
 
         eventRegistry.registerEvent(() -> PlayerBlockBreakEvents.BEFORE.register((world, player, pos, state, entity) ->{
-            Map<String, Block> validBlocks = new HashMap<>();
 
-            validBlocks.put("spawner", Blocks.SPAWNER);
-            validBlocks.put("amethyst", Blocks.BUDDING_AMETHYST);
+            if(entity instanceof IDisplayShop displayShop && player instanceof ServerPlayerEntity serverPlayer) {
+                ConfirmMenu confirm = (ConfirmMenu) ArrowCore.INSTANCE.getMenuRegistry().createMenu("confirm", serverPlayer);
+                if(!displayShop.arrowcommands$isShop()) return true;
+                if(player.isCreative()) {
+                    confirm.init("Do you want to remove this shop?", () -> {
+                        world.setBlockState(pos, Blocks.AIR.getDefaultState());
+                        PlayerShopUtils.removeShop(player, pos);
+                        confirm.close();
+                    }, confirm::close);
+                    confirm.open();
+                    return false;
+                }
 
-            for(Map.Entry<String, Block> entry : validBlocks.entrySet()) {
-                Block keyBlock = entry.getValue();
-                boolean allowed = ArrowCommands.CONFIG.silkTouchSettings.get(entry.getKey());
-                if(keyBlock.equals(state.getBlock()) && allowed) {
-                    return SilkTouchUtils.attemptSilkTouch(player, state, pos, keyBlock);
+                UUID shopOwner = displayShop.arrowcommands$getOwner();
+                if(shopOwner != null && player.getUuid().equals(shopOwner)) {
+                    confirm.init("confirm_remove_shop", "confirm_yes", "confirm_no", () -> {
+                        world.setBlockState(pos, Blocks.AIR.getDefaultState());
+                        player.giveItemStack(new ItemStack(CobblemonItems.DISPLAY_CASE, 1));
+                        PlayerShopUtils.removeShop(player, pos);
+                        confirm.close();
+                    }, confirm::close);
+                    confirm.open();
+                    return false;
+                }
+                return !displayShop.arrowcommands$locked();
+            } else {
+                Map<String, Block> validBlocks = new HashMap<>();
+
+                validBlocks.put("spawner", Blocks.SPAWNER);
+                validBlocks.put("amethyst", Blocks.BUDDING_AMETHYST);
+
+                for (Map.Entry<String, Block> entry : validBlocks.entrySet()) {
+                    Block keyBlock = entry.getValue();
+                    boolean allowed = ArrowCommands.CONFIG.silkTouchSettings.get(entry.getKey());
+                    if (keyBlock.equals(state.getBlock()) && allowed) {
+                        return SilkTouchUtils.attemptSilkTouch(player, state, pos, keyBlock);
+                    }
+                }
+                return true;
+            }
+        }));
+
+        eventRegistry.registerEvent(() -> UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
+            BlockPos pos = hitResult.getBlockPos();
+            BlockEntity entity = world.getBlockEntity(pos);
+            if(player instanceof ServerPlayerEntity serverPlayer) {
+                if ((entity instanceof DisplayCaseBlockEntity)) {
+                    IDisplayShop displayShop = BlockUtils.getDisplayShop(entity);
+
+                    if (displayShop != null && displayShop.arrowcommands$isShop()) {
+                        UUID shopOwner = displayShop.arrowcommands$getOwner();
+
+                        return ActionResult.FAIL;
+                    } else {
+                        PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
+                        PlayerDataCommands commandData = data.get(new PlayerDataCommands());
+                        TempShopData shopData = commandData.playerShopData.tempShop;
+
+                        if (shopData != null && shopData.isValid(pos)) {
+
+                            ItemStack inHand = player.getStackInHand(hand);
+                            if (shopData.getStage().equals(TempShopData.ShopStage.saleData) && !inHand.isEmpty()) {
+                                ((ItemShopSaleData) shopData.shop.saleData).setItem(inHand);
+                                shopData.resetStage();
+                                commandData.playerShopData.tempShop = shopData;
+                                data.put(commandData);
+                                ArrowCore.INSTANCE.getMenuRegistry().createMenu("edit_shop_menu", serverPlayer).open();
+                                return ActionResult.FAIL;
+                            }
+                        }
+                    }
+                } else if (entity instanceof LockableContainerBlockEntity && player.getMainHandStack().isOf(Items.TRIPWIRE_HOOK) && player.isSneaking()) {
+                    PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
+                    PlayerDataCommands commandData = data.get(new PlayerDataCommands());
+                    TempShopData shopData = commandData.playerShopData.tempShop;
+                    if (shopData != null && shopData.getStage().equals(TempShopData.ShopStage.stock)) {
+                        ((ItemShopSaleData) shopData.shop.saleData).addStock(pos);
+                        shopData.resetStage();
+                        commandData.playerShopData.tempShop = shopData;
+                        data.put(commandData);
+                        ArrowCore.INSTANCE.getMenuRegistry().createMenu("edit_shop_menu", serverPlayer).open();
+                        return ActionResult.FAIL;
+                    }
                 }
             }
-            return true;
+            return ActionResult.PASS;
         }));
 
         eventRegistry.registerEvent(() -> RefreshCallback.EVENT.register((server) -> {
             CONFIG = CONFIG.load();
             KitRegistry.load(server);
             CrateRegistry.register(server);
+            ServerShopRegistry.register(server);
             return ActionResult.PASS;
         }));
 
@@ -308,9 +438,7 @@ public class ArrowCommands implements ModInitializer {
             ServerDataCommands serverDataCommands = serverData.get(new ServerDataCommands());
         }));
 
-        eventRegistry.registerEvent(() -> ArrowEvents.PLAYER_DATA_UNLOADING_EVENT.register((serverPlayerEntity, data) -> {
-
-        }));
+        eventRegistry.registerEvent(() -> ArrowEvents.PLAYER_DATA_UNLOADING_EVENT.register((serverPlayerEntity, data) -> {}));
 
         eventRegistry.registerEvent(() -> ArrowEvents.CONFIG_LOADED_EVENT.register(() -> {
 
@@ -351,31 +479,56 @@ public class ArrowCommands implements ModInitializer {
             data.put(commandData);
         }));
 
-        eventRegistry.registerEvent(() -> ServerPlayConnectionEvents.DISCONNECT.register(((network, server) -> {
-            ServerPlayerEntity player = network.player;
+        eventRegistry.registerEvent(() -> ArrowEvents.PLAYER_DATA_UNLOADING_EVENT.register((player, data) -> {
             DaycareMenu.daycareMenus.remove(player.getUuid());
 
-            PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
             PlayerDataCommands commandData = data.get(new PlayerDataCommands());
             commandData.onTimeData.logTime();
             data.put(commandData);
+        }));
+
+        eventRegistry.registerEvent(() -> ServerPlayConnectionEvents.DISCONNECT.register(((network, server) -> {
+
         })));
 
         eventRegistry.registerEvent(() -> ServerLifecycleEvents.SERVER_STOPPING.register((server) -> {
             TIMER.cancel();
         }));
 
-        eventRegistry.registerEvent(() -> MenuCloseCallback.EVENT.register((player) -> {
-            if(DaycareMenu.daycareMenus.containsKey(player.getUuid())) {
-                PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
-                PlayerDataCommands commandData = data.get(new PlayerDataCommands());
+        eventRegistry.registerEvent(() -> MenuCloseCallback.EVENT.register((menu) -> {
+            ServerPlayerEntity player = menu.getPlayer();
+            String menuName = menu.menuName;
+            
+            PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
+            PlayerDataCommands commandData = data.get(new PlayerDataCommands());
+            
+            if(menuName.equalsIgnoreCase("daycare")) {
+                if (DaycareMenu.daycareMenus.containsKey(player.getUuid())) {
+                    commandData.daycareData.clearSlots();
+                    data.put(commandData);
+                    DaycareMenu.daycareMenus.remove(player.getUuid());
+                }
+            } else if (menuName.equalsIgnoreCase("crate")) {
+                CrateRegistry.grantRewards(player);
+            } else if (menuName.equalsIgnoreCase("edit_shop_menu")) {
+                TempShopData tempShop = commandData.playerShopData.tempShop;
+                if(tempShop == null) return ActionResult.PASS;
 
-                commandData.daycareData.clearSlots();
-                data.put(commandData);
-
-                DaycareMenu.daycareMenus.remove(player.getUuid());
+                boolean cancel = tempShop.getStage().equals(TempShopData.ShopStage.cancel);
+                boolean hasDisplay = tempShop.hasDisplayCase();
+                if(cancel && hasDisplay) {
+                    ServerWorld world = player.getServerWorld();
+                    BlockEntity entity = world.getBlockEntity(tempShop.shop.getDisplayCase());
+                    if(tempShop.hasDisplayCase() && entity instanceof ILockable lockable) {
+                        if(lockable.arrowcommands$locked()) {
+                            lockable.arrowcommands$unlock();
+                            debug("Display Case Unlocked");
+                        }
+                    }
+                    commandData.playerShopData.tempShop = null;
+                }
             }
-            CrateRegistry.grantRewards(player);
+            data.put(commandData);
             return ActionResult.PASS;
         }));
     }
@@ -390,10 +543,15 @@ public class ArrowCommands implements ModInitializer {
         menuRegistry.registerMenu("main", MainMenu.class);
         menuRegistry.registerMenu("settings", SettingsMenu.class);
         menuRegistry.registerMenu("shop", ShopMenu.class);
-        menuRegistry.registerMenu("shopping_cart", dev.elrol.arrow.commands.menus.shops.ShoppingCartMenu.class);
+        menuRegistry.registerMenu("shopping_cart", ShoppingCartMenu.class);
         menuRegistry.registerMenu("item_select", ItemSelectMenu.class);
         menuRegistry.registerMenu("item_shop", ItemShopMenu.class);
         menuRegistry.registerMenu("crate", CrateMenu.class);
+        menuRegistry.registerMenu("shop_setup", ShopSetupMenu.class);
+        menuRegistry.registerMenu("edit_shop_menu", EditShopMenu.class);
+        menuRegistry.registerMenu("item_shop_setup", ItemShopSetupMenu.class);
+        menuRegistry.registerMenu("poke_shop_setup", PokemonShopSetupMenu.class);
+        menuRegistry.registerMenu("poke_select", PokeSelectMenu.class);
 
     }
 
@@ -434,6 +592,14 @@ public class ArrowCommands implements ModInitializer {
         commandRegistry.registerCommand(new AFKCommand());
         commandRegistry.registerCommand(new OnTimeCommand());
         commandRegistry.registerCommand(new SeenCommand());
+
+        commandRegistry.registerCommand(new CreateShopCommand());
+    }
+
+    public static void debug(String message) {
+        if(ArrowCore.CONFIG.isDebug) {
+            ArrowCommands.LOGGER.warn(message);
+        }
     }
 
 }

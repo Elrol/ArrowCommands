@@ -16,6 +16,7 @@ import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
@@ -23,6 +24,10 @@ public class ItemSelectMenu extends _CommandMenuBase {
 
     ShoppingData shoppingData;
     GuiElementBuilder shopItemElement;
+    ListingData listingData;
+
+    ItemSelectFunction confirmFunction;
+    Runnable cancelFunction;
 
     public ItemSelectMenu(ServerPlayerEntity player) {
         super(player, ScreenHandlerType.GENERIC_9X5);
@@ -32,7 +37,6 @@ public class ItemSelectMenu extends _CommandMenuBase {
     @Override
     protected void drawMenu() {
         super.drawMenu();
-        ListingData listingData = shoppingData.currentCart;
 
         if(!listingData.isEmpty()) {
             int current = listingData.getUnits();
@@ -43,27 +47,37 @@ public class ItemSelectMenu extends _CommandMenuBase {
             shopItemElement.addLoreLine(ModTranslations.translate("arrow.menu.shop.select.amount").formatted( Formatting.GREEN).append(ModTranslations.literal (" " + current).formatted(Formatting.GRAY)));
             shopItemElement.addLoreLine(ModTranslations.translate("arrow.menu.shop.select.cost").formatted(Formatting.GREEN).append(ModTranslations.literal(" " + listingData.getPriceString()).formatted(Formatting.GRAY)));
 
-            setSlot(18, changeAmount(CommandsMenuItems.RED_BUTTON_4, listingData, -64));
-            setSlot(19, changeAmount(CommandsMenuItems.RED_BUTTON_3, listingData, -16));
-            setSlot(20, changeAmount(CommandsMenuItems.RED_BUTTON_2, listingData, -8));
-            setSlot(21, changeAmount(CommandsMenuItems.RED_BUTTON_1, listingData, -1));
+            setSlot(18, changeAmount(CommandsMenuItems.RED_BUTTON_4, -64));
+            setSlot(19, changeAmount(CommandsMenuItems.RED_BUTTON_3, -16));
+            setSlot(20, changeAmount(CommandsMenuItems.RED_BUTTON_2, -8));
+            setSlot(21, changeAmount(CommandsMenuItems.RED_BUTTON_1, -1));
 
             setSlot(22, shopItemElement);
 
-            setSlot(23, changeAmount(CommandsMenuItems.LIME_BUTTON_1, listingData, 1));
-            setSlot(24, changeAmount(CommandsMenuItems.LIME_BUTTON_2, listingData, 8));
-            setSlot(25, changeAmount(CommandsMenuItems.LIME_BUTTON_3, listingData, 16));
-            setSlot(26, changeAmount(CommandsMenuItems.LIME_BUTTON_4, listingData, 64));
+            setSlot(23, changeAmount(CommandsMenuItems.LIME_BUTTON_1, 1));
+            setSlot(24, changeAmount(CommandsMenuItems.LIME_BUTTON_2, 8));
+            setSlot(25, changeAmount(CommandsMenuItems.LIME_BUTTON_3, 16));
+            setSlot(26, changeAmount(CommandsMenuItems.LIME_BUTTON_4, 64));
 
             setSlot(29, cancel(CommandsMenuItems.RED_BUTTON_LEFT));
             setSlot(30, cancel(CommandsMenuItems.RED_BUTTON_RIGHT));
 
-            setSlot(32, confirm(CommandsMenuItems.LIME_BUTTON_LEFT, CommandsMenuItems.GRAY_BUTTON_LEFT, listingData));
-            setSlot(33, confirm(CommandsMenuItems.LIME_BUTTON_RIGHT, CommandsMenuItems.GRAY_BUTTON_RIGHT, listingData));
+            setSlot(32, confirm(CommandsMenuItems.LIME_BUTTON_LEFT, CommandsMenuItems.GRAY_BUTTON_LEFT));
+            setSlot(33, confirm(CommandsMenuItems.LIME_BUTTON_RIGHT, CommandsMenuItems.GRAY_BUTTON_RIGHT));
         }
     }
 
-    public GuiElementBuilder changeAmount(Item item, ListingData listingData, int amount) {
+    @Override
+    public void open() {
+        ArrowCommands.LOGGER.error("Item Select Menu was attempted to be opened without having a listing set.");
+    }
+
+    public void open(ListingData listingData, boolean clearHistory) {
+        this.listingData = listingData;
+        super.open(clearHistory);
+    }
+
+    public GuiElementBuilder changeAmount(Item item, int amount) {
         boolean isPositive = amount > 0;
         Formatting format = (isPositive ? Formatting.GREEN : Formatting.RED);
         int targetAmount = Math.max(listingData.getUnits() + amount, 0);
@@ -71,8 +85,6 @@ public class ItemSelectMenu extends _CommandMenuBase {
 
         GuiElementBuilder element = MenuUtils.item(item, 1, ModTranslations.literal((isPositive ? "+" : "") + amount).formatted(format, Formatting.BOLD)).setCallback(()->{
             listingData.changeUnits(amount);
-            commandData.shoppingData.currentCart = listingData;
-            data.put(commandData);
             click();
             drawMenu();
         });
@@ -86,13 +98,14 @@ public class ItemSelectMenu extends _CommandMenuBase {
     public GuiElementBuilder cancel(Item item) {
         return MenuUtils.item(item, 1, ModTranslations.translate("arrow.menu.shop.select.cancel").formatted(Formatting.RED, Formatting.BOLD))
                 .setCallback(() -> {
-                    click();
-                    commandData.shoppingData.cancelCurrentCart();
-                    Objects.requireNonNull(ArrowCore.INSTANCE.getMenuRegistry().createMenu("item_shop", player)).open();
+                    if(cancelFunction != null) {
+                        click();
+                        cancelFunction.run();
+                    }
                 });
     }
 
-    public GuiElementBuilder confirm(Item item, Item disabled, ListingData listingData) {
+    public GuiElementBuilder confirm(Item item, Item disabled) {
         int units = commandData.shoppingData.currentCart.getUnits();
         boolean flag = units > 0;
         return MenuUtils.item((flag ? item : disabled), 1, ModTranslations.translate("arrow.menu.shop.select.add").formatted(Formatting.BOLD, (flag ? Formatting.GREEN : Formatting.DARK_GRAY)))
@@ -100,16 +113,10 @@ public class ItemSelectMenu extends _CommandMenuBase {
                 .addLoreLine(ModTranslations.translate("arrow.menu.shop.select.cost").formatted(Formatting.GREEN).append(ModTranslations.literal(" " + listingData.getPriceString()).formatted(Formatting.GRAY)))
                 .setCallback(() -> {
                     if(!flag) return;
-                    commandData.shoppingData.confirmCurrentCart();
-                    _MenuBase menu = ArrowCore.INSTANCE.getMenuRegistry().createMenu("item_shop", player);
-                    if(menu == null) {
-                        if(ArrowCore.CONFIG.isDebug)
-                            ArrowCommands.LOGGER.error("Item Shop Menu was null when being created");
-                        return;
+                    if(confirmFunction != null) {
+                        click();
+                        confirmFunction.select(listingData);
                     }
-                    data.put(commandData);
-                    click();
-                    menu.open();
                 });
     }
 
@@ -124,7 +131,20 @@ public class ItemSelectMenu extends _CommandMenuBase {
     }
 
     @Override
-    public String getMenuName() {
+    public @NotNull String getMenuName() {
         return "item_select";
+    }
+
+    public void setConfirmFunction(ItemSelectFunction function) {
+        this.confirmFunction = function;
+    }
+
+    public void setCancelFunction(Runnable runnable) {
+        this.cancelFunction = runnable;
+    }
+
+    @FunctionalInterface
+    public interface ItemSelectFunction {
+        void select(ListingData listingData);
     }
 }

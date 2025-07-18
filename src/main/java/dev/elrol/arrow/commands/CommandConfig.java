@@ -1,21 +1,11 @@
 package dev.elrol.arrow.commands;
 
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
-import com.cobblemon.mod.common.pokemon.IVs;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.elrol.arrow.ArrowCore;
-import dev.elrol.arrow.config.ArrowConfig;
 import dev.elrol.arrow.config._BaseConfig;
-import dev.elrol.arrow.libs.CobblemonUtils;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.CustomModelDataComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextCodecs;
-import net.minecraft.util.Formatting;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 
@@ -30,17 +20,15 @@ public class CommandConfig extends _BaseConfig {
                 Codec.INT.fieldOf("rtpMin").forGetter(data -> data.rtpMin),
                 Codec.INT.fieldOf("rtpMax").forGetter(data -> data.rtpMax),
                 DaycareSettings.CODEC.fieldOf("daycareSettings").forGetter(data -> data.daycareSettings),
-                ShopSettings.CODEC.fieldOf("shopSettings").forGetter(data -> data.shopSettings),
                 SilkTouchSettings.CODEC.fieldOf("silkTouchSettings").forGetter(data -> data.silkTouchSettings),
                 CustomItemSettings.CODEC.fieldOf("customItemSettings").forGetter(data -> data.customItemSettings),
                 EconomySettings.CODEC.fieldOf("economySettings").forGetter(data -> data.economySettings),
                 Codec.STRING.fieldOf("discordLink").forGetter(data -> data.discordLink)
-        ).apply(instance, (rtpMin, rtpMax, daycareSettings, shopSettings, silkTouchSettings, customItemSettings, economySettings, discordLink) -> {
+        ).apply(instance, (rtpMin, rtpMax, daycareSettings, silkTouchSettings, customItemSettings, economySettings, discordLink) -> {
             CommandConfig data = new CommandConfig();
             data.rtpMin = rtpMin;
             data.rtpMax = rtpMax;
             data.daycareSettings = daycareSettings;
-            data.shopSettings = shopSettings;
             data.silkTouchSettings = silkTouchSettings;
             data.customItemSettings = customItemSettings;
             data.economySettings = economySettings;
@@ -53,7 +41,6 @@ public class CommandConfig extends _BaseConfig {
     public int rtpMax = 5000;
 
     public DaycareSettings daycareSettings = new DaycareSettings();
-    public ShopSettings shopSettings = new ShopSettings();
     public SilkTouchSettings silkTouchSettings = new SilkTouchSettings();
     public CustomItemSettings customItemSettings = new CustomItemSettings();
     public EconomySettings economySettings = new EconomySettings();
@@ -186,91 +173,8 @@ public class CommandConfig extends _BaseConfig {
         public float minutesToHatchEgg = 1.0f;
     }
 
-    public static class ShopSettings {
-
-        public static final Codec<ShopSettings> CODEC;
-
-        static {
-            CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                    Codec.unboundedMap(Codec.STRING, ShopItems.CODEC).fieldOf("shops").forGetter(data -> data.shops)
-            ).apply(instance, shops -> {
-                ShopSettings data = new ShopSettings();
-                data.shops = new HashMap<>(shops);
-                if(data.shops.isEmpty()) {
-                    if(ArrowCore.CONFIG.isDebug)
-                        ArrowCommands.LOGGER.warn("Shops were empty when data was loaded");
-                    ShopItems shopItems = new ShopItems();
-                    shopItems.color = Formatting.RED;
-                    data.shops.put("example", shopItems);
-                } else {
-                    if(ArrowCore.CONFIG.isDebug)
-                        ArrowCommands.LOGGER.warn("{} Shops were loaded", data.shops.size());
-                }
-                return data;
-            }));
-        }
-
-        public Map<String, ShopItems> shops = new HashMap<>();
-
-    }
-
-    public static class ShopItems {
-
-        public static final Codec<ShopItems> CODEC;
-
-        static {
-            CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                    Codec.INT.fieldOf("shopID").forGetter(data -> data.shopID),
-                    TextCodecs.CODEC.fieldOf("name").forGetter(data -> data.name),
-                    Formatting.CODEC.fieldOf("color").forGetter(data -> data.color),
-                    ItemStack.CODEC.fieldOf("shopIcon").forGetter(data -> data.shopIcon),
-                    ShopItem.CODEC.listOf().fieldOf("itemShop").forGetter(data -> data.itemShop)
-            ).apply(instance, (shopID, name, color, shopIcon, itemShop) -> {
-                ShopItems data = new ShopItems();
-                data.shopID = shopID;
-                data.name = name;
-                data.color = color;
-                data.shopIcon = shopIcon;
-                data.itemShop = new ArrayList<>(itemShop);
-                return data;
-            }));
-        }
-
-        public int shopID = 0;
-        public Text name = Text.literal("Example").formatted(Formatting.RED);
-        public Formatting color = Formatting.GOLD;
-        public ItemStack shopIcon = new ItemStack(Items.DIAMOND, 1);
-        public List<ShopItem> itemShop = new ArrayList<>();
-
-        public ShopItems() {
-            ItemStack stack = new ItemStack(Items.DIAMOND, 1);
-            stack.set(DataComponentTypes.CUSTOM_MODEL_DATA, new CustomModelDataComponent(1));
-            itemShop.add(new ShopItem(stack, 100000));
-        }
-    }
-
     public static class ShopItem {
-        public static final Codec<ShopItem> CODEC;
 
-        static {
-            CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                    ItemStack.CODEC.fieldOf("item").forGetter(data -> data.item),
-                    Codec.INT.fieldOf("cost").forGetter(data -> data.cost)
-            ).apply(instance, CommandConfig.ShopItem::new));
-        }
-
-        public ItemStack item;
-        public int cost;
-
-        public ShopItem() {
-            item = new ItemStack(Items.DIAMOND);
-            cost = 100000;
-        }
-
-        public ShopItem(ItemStack item, int cost) {
-            this.item = item;
-            this.cost = cost;
-        }
     }
 
     public static class CustomItemSettings {

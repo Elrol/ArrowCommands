@@ -17,8 +17,11 @@ public class CrateSuggestionProvider implements SuggestionProvider<ServerCommand
     @Override
     public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context, SuggestionsBuilder builder) {ServerPlayerEntity player = context.getSource().getPlayer();
         if(player != null) {
+            String input = context.getInput();
             for(String crate : CrateRegistry.getIDs()) {
-                builder.suggest(crate);
+                if(input.isEmpty() || crate.startsWith(input)) {
+                    builder.suggest(crate);
+                }
             }
         }
         return builder.buildFuture();

@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "arrowcommands:item/custom/templates/magma_gear_smithing_template"
+  }
+}

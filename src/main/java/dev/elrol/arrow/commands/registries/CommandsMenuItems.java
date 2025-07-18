@@ -5,10 +5,20 @@ import net.minecraft.item.Item;
 
 public class CommandsMenuItems implements IItemRegistry {
     
+    public static Item BUY_BUTTON;
+    public static Item BUY_BUTTON_SELECTED;
+    public static Item SELL_BUTTON;
+    public static Item SELL_BUTTON_SELECTED;
+
     public static Item GRAY_BUTTON;
     public static Item GRAY_BUTTON_LEFT;
     public static Item GRAY_BUTTON_MIDDLE;
     public static Item GRAY_BUTTON_RIGHT;
+
+    public static Item LIGHT_GRAY_BUTTON;
+    public static Item LIGHT_GRAY_BUTTON_LEFT;
+    public static Item LIGHT_GRAY_BUTTON_MIDDLE;
+    public static Item LIGHT_GRAY_BUTTON_RIGHT;
     
     public static Item LIME_BUTTON;
     public static Item LIME_BUTTON_1;
@@ -60,10 +70,20 @@ public class CommandsMenuItems implements IItemRegistry {
 
     public void register(){
 
+        BUY_BUTTON                  = get("buy_button");
+        BUY_BUTTON_SELECTED         = get("buy_button_selected");
+        SELL_BUTTON                 = get("sell_button");
+        SELL_BUTTON_SELECTED        = get("sell_button_selected");
+        
         GRAY_BUTTON                 = get("gray_button");
         GRAY_BUTTON_LEFT            = get("gray_button_left");
         GRAY_BUTTON_MIDDLE          = get("gray_button_middle");
         GRAY_BUTTON_RIGHT           = get("gray_button_right");
+
+        LIGHT_GRAY_BUTTON           = get("light_gray_button");
+        LIGHT_GRAY_BUTTON_LEFT      = get("light_gray_button_left");
+        LIGHT_GRAY_BUTTON_MIDDLE    = get("light_gray_button_middle");
+        LIGHT_GRAY_BUTTON_RIGHT     = get("light_gray_button_right");
 
         LIME_BUTTON                 = get("lime_button");
         LIME_BUTTON_1               = get("lime_button_1");

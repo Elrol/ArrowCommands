@@ -1,0 +1,9 @@
+{
+  "id": "arrowcommands:sell_button_selected",
+  "vanillaItem": "minecraft:paper",
+  "itemResource":{
+    "models": {
+      "default": "arrowcommands:item/gui/shop/sell_button_selected"
+    }
+  }
+}

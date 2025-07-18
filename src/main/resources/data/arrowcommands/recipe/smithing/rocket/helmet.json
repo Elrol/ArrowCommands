@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:smithing_transform",
+  "addition": {
+    "item": "cobblemon:blue_apricorn"
+  },
+  "base": {
+    "item": "minecraft:netherite_helmet"
+  },
+  "result": {
+    "count": 1,
+    "id": "arrowcommands:rocket_helmet"
+  },
+  "template": {
+    "item": "arrowcommands:rocket_gear_smithing_template"
+  }
+}

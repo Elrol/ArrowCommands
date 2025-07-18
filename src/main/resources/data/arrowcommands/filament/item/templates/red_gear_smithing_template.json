@@ -1,0 +1,20 @@
+{
+  "id": "arrowcommands:red_gear_smithing_template",
+  "vanillaItem": "minecraft:paper",
+  "itemResource":{
+    "models": {
+      "default": "arrowcommands:item/custom/templates/red_gear_smithing_template"
+    }
+  },
+  "properties": {
+    "lore": [
+      "<c:gray>Red Gear Upgrade</c>",
+      "",
+      "<c:gray>Applies to:</c>",
+      "<c:blue> Netherite Equipment</c>",
+      "<c:gray>Ingredients:</c>",
+      "<c:blue> Redstone</c>"
+    ]
+  },
+  "group": "arrow:templates"
+}

@@ -5,6 +5,7 @@ import dev.elrol.arrow.menus._MenuBase;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.Identifier;
 
 public abstract class _CommandMenuBase extends _MenuBase {
 
@@ -15,4 +16,8 @@ public abstract class _CommandMenuBase extends _MenuBase {
         commandData = data.get(new PlayerDataCommands());
     }
 
+    @Override
+    public Identifier getMenuFont() {
+        return Identifier.of("arrowcommands", "default");
+    }
 }

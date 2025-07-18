@@ -1,0 +1,21 @@
+{
+  "id": "arrowcommands:star_gear_smithing_template",
+  "vanillaItem": "minecraft:paper",
+  "itemResource":{
+    "models": {
+      "default": "arrowcommands:item/custom/templates/star_gear_smithing_template"
+    }
+  },
+  "properties": {
+    "lore": [
+      "<c:gray>Star Gear Upgrade</c>",
+      "",
+      "<c:gray>Applies to:</c>",
+      "<c:blue> Netherite Equipment</c>",
+      "<c:gray>Ingredients:</c>",
+      "<c:blue> Blue Apricorn</c>",
+      "<c:blue> Pink Apricorn</c>"
+    ]
+  },
+  "group": "arrow:templates"
+}
