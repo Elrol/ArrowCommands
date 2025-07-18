@@ -9,16 +9,12 @@ import dev.elrol.arrow.commands.menus._CommandMenuBase;
 import dev.elrol.arrow.commands.registries.CommandsMenuItems;
 import dev.elrol.arrow.libs.MenuUtils;
 import dev.elrol.arrow.libs.ModTranslations;
-import dev.elrol.arrow.menus._MenuBase;
 import eu.pb4.sgui.api.elements.GuiElementBuilder;
 import net.minecraft.item.Item;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
 
 public class ItemSelectMenu extends _CommandMenuBase {
 
@@ -72,8 +68,10 @@ public class ItemSelectMenu extends _CommandMenuBase {
         ArrowCommands.LOGGER.error("Item Select Menu was attempted to be opened without having a listing set.");
     }
 
-    public void open(ListingData listingData, boolean clearHistory) {
+    public void open(ListingData listingData, boolean clearHistory, ItemSelectFunction selectFunction, Runnable cancelFunction) {
         this.listingData = listingData;
+        this.confirmFunction = selectFunction;
+        this.cancelFunction = cancelFunction;
         super.open(clearHistory);
     }
 
@@ -133,14 +131,6 @@ public class ItemSelectMenu extends _CommandMenuBase {
     @Override
     public @NotNull String getMenuName() {
         return "item_select";
-    }
-
-    public void setConfirmFunction(ItemSelectFunction function) {
-        this.confirmFunction = function;
-    }
-
-    public void setCancelFunction(Runnable runnable) {
-        this.cancelFunction = runnable;
     }
 
     @FunctionalInterface

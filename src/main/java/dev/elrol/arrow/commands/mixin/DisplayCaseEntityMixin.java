@@ -31,13 +31,7 @@ public class DisplayCaseEntityMixin implements IDisplayShop {
     @Inject(method = "updateItem", at = @At("HEAD"), cancellable = true)
     public void arrowcommands$preventUpdate(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
         if(arrowcommands$locked() && player instanceof ServerPlayerEntity serverPlayer) {
-            DisplayCaseBlockEntity target = (DisplayCaseBlockEntity)(Object) this;
-            target.markDirty();
-            BlockState state = serverPlayer.getServerWorld().getBlockState(target.getPos());
-            serverPlayer.getServerWorld().updateListeners(target.getPos(), state, state, 0);
-            serverPlayer.networkHandler.sendPacket(new BlockUpdateS2CPacket(target.getPos(), state));
-            serverPlayer.getInventory().updateItems();
-            //serverPlayer.networkHandler.sendPacket(new InventoryS2CPacket(0, 0, ));
+            arrowcommands$update(serverPlayer);
             cir.setReturnValue(ActionResult.FAIL);
         }
     }
@@ -55,6 +49,16 @@ public class DisplayCaseEntityMixin implements IDisplayShop {
         if(uuid != null) {
             arrowcommands$setOwner(UUID.fromString(uuid));
         }
+    }
+
+    @Override
+    public void arrowcommands$update(ServerPlayerEntity player) {
+        DisplayCaseBlockEntity target = (DisplayCaseBlockEntity)(Object) this;
+        target.markDirty();
+        BlockState state = player.getServerWorld().getBlockState(target.getPos());
+        player.getServerWorld().updateListeners(target.getPos(), state, state, 0);
+        player.networkHandler.sendPacket(new BlockUpdateS2CPacket(target.getPos(), state));
+        player.getInventory().updateItems();
     }
 
     @Override

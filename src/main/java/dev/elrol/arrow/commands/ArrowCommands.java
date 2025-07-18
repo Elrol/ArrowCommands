@@ -358,12 +358,8 @@ public class ArrowCommands implements ModInitializer {
             if(player instanceof ServerPlayerEntity serverPlayer) {
                 if ((entity instanceof DisplayCaseBlockEntity)) {
                     IDisplayShop displayShop = BlockUtils.getDisplayShop(entity);
-
-                    if (displayShop != null && displayShop.arrowcommands$isShop()) {
-                        UUID shopOwner = displayShop.arrowcommands$getOwner();
-
-                        return ActionResult.FAIL;
-                    } else {
+                    // TODO make this better
+                    if (displayShop == null || !displayShop.arrowcommands$isShop()) {
                         PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
                         PlayerDataCommands commandData = data.get(new PlayerDataCommands());
                         TempShopData shopData = commandData.playerShopData.tempShop;

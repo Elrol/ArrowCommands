@@ -120,7 +120,8 @@ public class ItemShopMenu extends _CommandPageMenuBase {
 
             // Create a new ItemSelect Menu to allow the player to shop
             ItemSelectMenu selectMenu = (ItemSelectMenu) ArrowCore.INSTANCE.getMenuRegistry().createMenu("item_select", player);
-            selectMenu.setConfirmFunction((listing) -> {
+
+            selectMenu.open(commandData.shoppingData.currentCart, false, (listing) -> {
                 click();
 
                 // Confirms the current cart and adds it to the shopping cart
@@ -138,9 +139,7 @@ public class ItemShopMenu extends _CommandPageMenuBase {
                 }
                 data1.put(commandData1);
                 menu.open();
-            });
-
-            selectMenu.setCancelFunction(() -> {
+            }, () -> {
                 click();
 
                 // Clears the current cart and returns to the Item Shop menu
@@ -150,8 +149,6 @@ public class ItemShopMenu extends _CommandPageMenuBase {
                 data1.put(commandData1);
                 Objects.requireNonNull(ArrowCore.INSTANCE.getMenuRegistry().createMenu("item_shop", player)).open();
             });
-
-            selectMenu.open(commandData.shoppingData.currentCart, false);
         });
     }
 

@@ -6,8 +6,7 @@
   "mixins": [],
   "client": [],
   "server": [
-    "DisplayCaseEntityMixin",
-    "DisplayCaseBlockMixin"
+    "DisplayCaseEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1
