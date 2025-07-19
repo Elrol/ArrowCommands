@@ -356,7 +356,7 @@ public class ArrowCommands implements ModInitializer {
             BlockPos pos = hitResult.getBlockPos();
             BlockEntity entity = world.getBlockEntity(pos);
             if(player instanceof ServerPlayerEntity serverPlayer) {
-                if ((entity instanceof DisplayCaseBlockEntity)) {
+                if (entity instanceof DisplayCaseBlockEntity) {
                     IDisplayShop displayShop = BlockUtils.getDisplayShop(entity);
                     // TODO make this better
                     if (displayShop == null || !displayShop.arrowcommands$isShop()) {
@@ -365,7 +365,6 @@ public class ArrowCommands implements ModInitializer {
                         TempShopData shopData = commandData.playerShopData.tempShop;
 
                         if (shopData != null && shopData.isValid(pos)) {
-
                             ItemStack inHand = player.getStackInHand(hand);
                             if (shopData.getStage().equals(TempShopData.ShopStage.saleData) && !inHand.isEmpty()) {
                                 ((ItemShopSaleData) shopData.shop.saleData).setItem(inHand);

@@ -27,6 +27,8 @@ public class CreateShopCommand extends _CommandBase {
     private int noArgs(CommandContext<ServerCommandSource> context) {
         ServerPlayerEntity player = getPlayer(context);
         if(player != null) {
+            //ToDo 07192025
+            PermUtils.hasPerm(player, "arrow.command.");
             ArrowCore.INSTANCE.getMenuRegistry().createMenu("shop_setup", player).open(true);
         } else {
             context.getSource().sendMessage(ModTranslations.err("not_player"));
