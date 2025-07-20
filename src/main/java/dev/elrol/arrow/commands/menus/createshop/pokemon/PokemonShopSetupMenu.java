@@ -11,6 +11,7 @@ import dev.elrol.arrow.libs.CobblemonUtils;
 import eu.pb4.sgui.api.elements.GuiElementBuilder;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
+import org.jetbrains.annotations.NotNull;
 
 public class PokemonShopSetupMenu extends _CommandMenuBase {
 
@@ -35,7 +36,7 @@ public class PokemonShopSetupMenu extends _CommandMenuBase {
                         .setCallback(() -> {
                             click();
                             ShopData shopData = new ShopData(player.getUuid());
-                            shopData.saleData = new PokemonShopSaleData();
+                            shopData.saleData = new PokemonShopSaleData(player.getUuid());
                             commandData.playerShopData.tempShop = new TempShopData(shopData);
                             data.put(commandData);
                         });
@@ -55,7 +56,7 @@ public class PokemonShopSetupMenu extends _CommandMenuBase {
     }
 
     @Override
-    public String getMenuName() {
+    public @NotNull String getMenuName() {
         return "pokemon_shop_setup";
     }
 }

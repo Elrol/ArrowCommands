@@ -9,7 +9,7 @@ import net.minecraft.util.Identifier;
 
 public abstract class _CommandMenuBase extends _MenuBase {
 
-    protected final PlayerDataCommands commandData;
+    protected PlayerDataCommands commandData;
 
     public <T extends ScreenHandler> _CommandMenuBase(ServerPlayerEntity player, ScreenHandlerType<T> type) {
         super(player, type);

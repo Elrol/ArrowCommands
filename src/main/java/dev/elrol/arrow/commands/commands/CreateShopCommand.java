@@ -4,6 +4,8 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.commands._CommandBase;
+import dev.elrol.arrow.commands.data.PlayerDataCommands;
+import dev.elrol.arrow.commands.libs.CommandsConstants;
 import dev.elrol.arrow.libs.ModTranslations;
 import dev.elrol.arrow.libs.PermUtils;
 import net.minecraft.command.CommandRegistryAccess;
@@ -27,9 +29,16 @@ public class CreateShopCommand extends _CommandBase {
     private int noArgs(CommandContext<ServerCommandSource> context) {
         ServerPlayerEntity player = getPlayer(context);
         if(player != null) {
-            //ToDo 07192025
-            PermUtils.hasPerm(player, "arrow.command.");
-            ArrowCore.INSTANCE.getMenuRegistry().createMenu("shop_setup", player).open(true);
+            //Check to see how many shops a player can have
+            int maxShops = PermUtils.getMetaData(player).getMetaValue(CommandsConstants.MetaKeys.MAX_PLAYER_SHOPS, Integer::parseInt).orElse(0);
+            int addShops = PermUtils.getMetaData(player).getMetaValue(CommandsConstants.MetaKeys.ADD_PLAYER_SHOPS, Integer::parseInt).orElse(0);
+            int curShops = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player).get(new PlayerDataCommands()).playerShopData.getShopCount();
+
+            if(curShops < (maxShops + addShops)) {
+                ArrowCore.INSTANCE.getMenuRegistry().createMenu("shop_setup", player).open(true);
+            } else {
+                player.sendMessage(ModTranslations.err("max_shops"));
+            }
         } else {
             context.getSource().sendMessage(ModTranslations.err("not_player"));
         }

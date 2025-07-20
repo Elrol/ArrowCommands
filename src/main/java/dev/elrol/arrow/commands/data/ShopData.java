@@ -3,9 +3,10 @@ package dev.elrol.arrow.commands.data;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.elrol.arrow.ArrowCore;
+import dev.elrol.arrow.api.registries.IEconomyRegistry;
 import dev.elrol.arrow.codecs.ArrowCodecs;
 import dev.elrol.arrow.commands.registries.ShopSaleDataTypes;
-import net.fabricmc.fabric.api.util.TriState;
+import net.luckperms.api.util.Tristate;
 import net.minecraft.block.entity.BarrelBlockEntity;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
@@ -16,6 +17,7 @@ import net.minecraft.util.Uuids;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -37,12 +39,18 @@ public class ShopData {
     ).apply(instance, (owner, displayCase, saleData, price, isSelling) -> {
         ShopData data = new ShopData(owner);
         displayCase.ifPresent(data::setDisplayCase);
-        data.saleData = saleData;
+        if(saleData instanceof ItemShopSaleData itemSaleData) {
+            data.saleData = itemSaleData;
+        } else if (saleData instanceof PokemonShopSaleData pokeSaleData) {
+            data.saleData = pokeSaleData;
+        } else {
+            data.saleData = null;
+        }
         data.setPrice(price);
         data.setIsSelling(switch (isSelling) {
-            case -1 -> TriState.FALSE;
-            case 1 -> TriState.TRUE;
-            default -> TriState.DEFAULT;
+            case -1 -> Tristate.FALSE;
+            case 1 -> Tristate.TRUE;
+            default -> Tristate.UNDEFINED;
         });
 
         return data;
@@ -52,7 +60,7 @@ public class ShopData {
     BlockPos displayCase = new BlockPos(0,0,0);
     public ShopSaleData saleData;
     int price = -1;
-    TriState isSelling = TriState.DEFAULT;
+    Tristate isSelling = Tristate.UNDEFINED;
 
     public ShopData(UUID owner) {
         this.owner = owner;
@@ -79,13 +87,13 @@ public class ShopData {
         this.price = price;
     }
 
-    public TriState getIsSelling() {
+    public Tristate getIsSelling() {
         //ToDo change this to allow buying of pokemon
-        if(saleData.getType().equals(ShopSaleDataTypes.POKEMON_SHOP)) return TriState.TRUE;
+        if(saleData.getType().equals(ShopSaleDataTypes.POKEMON_SHOP)) return Tristate.TRUE;
         return isSelling;
     }
 
-    public void setIsSelling(TriState isSelling) {
+    public void setIsSelling(Tristate isSelling) {
         this.isSelling = isSelling;
     }
 
@@ -127,5 +135,29 @@ public class ShopData {
         ListingData listing = new ListingData(saleData.getDisplayItem(), price, 1);
         listing.setMaxUnits(getMaxUnits(world));
         return listing;
+    }
+
+    public ShopSaleData.ShopSaleDataType<?> getType() { return saleData.getType(); }
+
+    public boolean isShopOpen() {
+        boolean isItemShop = getType().equals(ShopSaleDataTypes.ITEM_SHOP);
+        IEconomyRegistry econRegistry = ArrowCore.INSTANCE.getEconomyRegistry();
+
+        if(isItemShop) {
+            if(isSelling.asBoolean()) {
+                //Selling items
+            } else {
+                //Buying items
+            }
+        } else {
+            if(isSelling.asBoolean()) {
+                //Selling Pokémon
+                return saleData.isShopOpen();
+            } else {
+                //Buying Pokémon
+                return econRegistry.canAfford(owner, BigDecimal.valueOf(getPrice()));
+            }
+        }
+        return true;
     }
 }

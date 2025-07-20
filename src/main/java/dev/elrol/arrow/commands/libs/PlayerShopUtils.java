@@ -1,16 +1,17 @@
 package dev.elrol.arrow.commands.libs;
 
+import com.cobblemon.mod.common.api.storage.party.PartyPosition;
+import com.cobblemon.mod.common.api.storage.party.PlayerPartyStore;
+import com.cobblemon.mod.common.pokemon.Pokemon;
 import dev.elrol.arrow.ArrowCore;
-import dev.elrol.arrow.commands.data.PlayerDataCommands;
-import dev.elrol.arrow.commands.data.PlayerShopData;
-import dev.elrol.arrow.commands.data.ShopData;
-import dev.elrol.arrow.commands.data.TempShopData;
+import dev.elrol.arrow.commands.data.*;
 import dev.elrol.arrow.commands.interfaces.IDisplayShop;
+import dev.elrol.arrow.commands.registries.ShopSaleDataTypes;
 import dev.elrol.arrow.data.PlayerData;
+import dev.elrol.arrow.libs.CobblemonUtils;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
@@ -45,19 +46,36 @@ public class PlayerShopUtils {
         if(pos == null || isShop(player.getServerWorld(), pos)) return false;
 
         ShopData shop = tempShopData.shop;
+
+        if(tempShopData.getShopType().equals(ShopSaleDataTypes.POKEMON_SHOP)) {
+            PokemonShopSaleData pokemonShopSaleData = ((PokemonShopSaleData) shop.saleData);
+            PlayerPartyStore party = CobblemonUtils.getParty(player);
+            Pokemon pokemon = party.get(pokemonShopSaleData.slot);
+            party.remove(new PartyPosition(pokemonShopSaleData.slot));
+            if(pokemon == null) {
+                return false;
+            }
+            pokemonShopSaleData.setPokemon(pokemon);
+            shop.saleData = pokemonShopSaleData;
+        }
+
         playerShopData.addShop(pos, shop);
         playerShopData.tempShop = null;
         commandData.playerShopData = playerShopData;
-        data.put(commandData);
+        data.put(commandData, true);
 
         return true;
     }
 
-    public static void removeShop(PlayerEntity player, BlockPos pos) {
+    public static void removeShop(ServerPlayerEntity player, BlockPos pos) {
         if(!isShop(player.getWorld(), pos)) return;
 
         PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
         PlayerDataCommands commandData = data.get(new PlayerDataCommands());
+        ShopData shop = commandData.playerShopData.getShop(pos);
+        if(shop != null && shop.saleData instanceof PokemonShopSaleData pokeSaleData) {
+            pokeSaleData.givePokemon(player);
+        }
         commandData.playerShopData.removeShop(pos);
         data.put(commandData, true);
     }

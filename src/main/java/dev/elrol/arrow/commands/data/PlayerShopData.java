@@ -38,4 +38,6 @@ public class PlayerShopData {
     public Collection<ShopData> getShops() {
         return shops.values();
     }
+
+    public int getShopCount() { return shops.size(); }
 }

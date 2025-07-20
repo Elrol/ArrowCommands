@@ -6,20 +6,23 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.elrol.arrow.commands.registries.ShopSaleDataTypes;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public class ItemShopSaleData implements ShopSaleData {
 
     public static final MapCodec<ItemShopSaleData> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            Codec.STRING.fieldOf("owner").forGetter(data -> data.owner.toString()),
             ItemStack.CODEC.optionalFieldOf("item").forGetter(data -> Optional.ofNullable(data.item)),
             BlockPos.CODEC.listOf().fieldOf("stock").forGetter(data -> data.stock),
             Codec.INT.fieldOf("amount").forGetter(data -> data.amount)
-    ).apply(instance, (item, stock, amount) -> {
-        ItemShopSaleData data = new ItemShopSaleData();
+    ).apply(instance, (owner, item, stock, amount) -> {
+        ItemShopSaleData data = new ItemShopSaleData(UUID.fromString(owner));
         item.ifPresent(data::setItem);
         data.stock.addAll(stock);
         data.amount = amount;
@@ -29,6 +32,11 @@ public class ItemShopSaleData implements ShopSaleData {
     ItemStack item = null;
     List<BlockPos> stock = new ArrayList<>();
     int amount = 1;
+    final UUID owner;
+
+    public ItemShopSaleData(UUID owner) {
+        this.owner = owner;
+    }
 
     public void setItem(ItemStack item) {
         this.item = item;
@@ -53,5 +61,15 @@ public class ItemShopSaleData implements ShopSaleData {
     @Override
     public @NotNull ItemStack getDisplayItem() {
         return getItemStack();
+    }
+
+    @Override
+    public @NonNull UUID getOwner() {
+        return owner;
+    }
+
+    @Override
+    public boolean isShopOpen() {
+        return !item.isEmpty();
     }
 }

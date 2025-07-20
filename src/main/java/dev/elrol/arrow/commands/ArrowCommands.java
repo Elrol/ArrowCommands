@@ -316,7 +316,7 @@ public class ArrowCommands implements ModInitializer {
                 if(player.isCreative()) {
                     confirm.init("Do you want to remove this shop?", () -> {
                         world.setBlockState(pos, Blocks.AIR.getDefaultState());
-                        PlayerShopUtils.removeShop(player, pos);
+                        PlayerShopUtils.removeShop(serverPlayer, pos);
                         confirm.close();
                     }, confirm::close);
                     confirm.open();
@@ -328,7 +328,7 @@ public class ArrowCommands implements ModInitializer {
                     confirm.init("confirm_remove_shop", "confirm_yes", "confirm_no", () -> {
                         world.setBlockState(pos, Blocks.AIR.getDefaultState());
                         player.giveItemStack(new ItemStack(CobblemonItems.DISPLAY_CASE, 1));
-                        PlayerShopUtils.removeShop(player, pos);
+                        PlayerShopUtils.removeShop(serverPlayer, pos);
                         confirm.close();
                     }, confirm::close);
                     confirm.open();

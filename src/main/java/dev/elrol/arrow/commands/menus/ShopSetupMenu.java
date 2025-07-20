@@ -5,11 +5,11 @@ import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.commands.ArrowCommands;
 import dev.elrol.arrow.commands.data.*;
 import dev.elrol.arrow.libs.MenuUtils;
-import dev.elrol.arrow.menus._MenuBase;
 import net.minecraft.item.Items;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import org.jetbrains.annotations.NotNull;
 
 public class ShopSetupMenu extends _CommandMenuBase {
 
@@ -21,13 +21,9 @@ public class ShopSetupMenu extends _CommandMenuBase {
     protected void drawMenu() {
         super.drawMenu();
 
-        setSlot(20, MenuUtils.item(Items.APPLE, 1, Text.literal("Item Shop")).setCallback(() -> {
-            newShop("item");
-        }));
+        setSlot(20, MenuUtils.item(Items.APPLE, 1, Text.literal("Item Shop")).setCallback(() -> newShop("item")));
 
-        setSlot(24, MenuUtils.item(CobblemonItems.POKE_BALL, 1, Text.literal("Pokemon Shop")).setCallback(() -> {
-            newShop("pokemon");
-        }));
+        setSlot(24, MenuUtils.item(CobblemonItems.POKE_BALL, 1, Text.literal("Pokemon Shop")).setCallback(() -> newShop("pokemon")));
 
     }
 
@@ -40,11 +36,11 @@ public class ShopSetupMenu extends _CommandMenuBase {
 
         switch (type.toLowerCase()) {
             case "item": {
-                saleData = new ItemShopSaleData();
+                saleData = new ItemShopSaleData(player.getUuid());
                 break;
             }
             case "pokemon": {
-                saleData = new PokemonShopSaleData();
+                saleData = new PokemonShopSaleData(player.getUuid());
                 break;
             }
             default: {
@@ -74,7 +70,7 @@ public class ShopSetupMenu extends _CommandMenuBase {
     }
 
     @Override
-    public String getMenuName() {
+    public @NotNull String getMenuName() {
         return "shop_setup";
     }
 }

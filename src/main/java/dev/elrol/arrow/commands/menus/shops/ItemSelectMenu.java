@@ -36,6 +36,7 @@ public class ItemSelectMenu extends _CommandMenuBase {
 
         if(!listingData.isEmpty()) {
             int current = listingData.getUnits();
+            int max = listingData.getMaxUnits();
 
             shopItemElement = MenuUtils.itemStack(
                     listingData.getItem(),
@@ -43,17 +44,17 @@ public class ItemSelectMenu extends _CommandMenuBase {
             shopItemElement.addLoreLine(ModTranslations.translate("arrow.menu.shop.select.amount").formatted( Formatting.GREEN).append(ModTranslations.literal (" " + current).formatted(Formatting.GRAY)));
             shopItemElement.addLoreLine(ModTranslations.translate("arrow.menu.shop.select.cost").formatted(Formatting.GREEN).append(ModTranslations.literal(" " + listingData.getPriceString()).formatted(Formatting.GRAY)));
 
-            setSlot(18, changeAmount(CommandsMenuItems.RED_BUTTON_4, -64));
-            setSlot(19, changeAmount(CommandsMenuItems.RED_BUTTON_3, -16));
-            setSlot(20, changeAmount(CommandsMenuItems.RED_BUTTON_2, -8));
-            setSlot(21, changeAmount(CommandsMenuItems.RED_BUTTON_1, -1));
+            if(current - 64 >= 1) setSlot(18, changeAmount(CommandsMenuItems.RED_BUTTON_4, -64));
+            if(current - 16 >= 1) setSlot(19, changeAmount(CommandsMenuItems.RED_BUTTON_3, -16));
+            if(current - 8 >= 1)  setSlot(20, changeAmount(CommandsMenuItems.RED_BUTTON_2, -8));
+            if(current - 1 >= 1)  setSlot(21, changeAmount(CommandsMenuItems.RED_BUTTON_1, -1));
 
             setSlot(22, shopItemElement);
 
-            setSlot(23, changeAmount(CommandsMenuItems.LIME_BUTTON_1, 1));
-            setSlot(24, changeAmount(CommandsMenuItems.LIME_BUTTON_2, 8));
-            setSlot(25, changeAmount(CommandsMenuItems.LIME_BUTTON_3, 16));
-            setSlot(26, changeAmount(CommandsMenuItems.LIME_BUTTON_4, 64));
+            if(current + 1 <= max)  setSlot(23, changeAmount(CommandsMenuItems.LIME_BUTTON_1, 1));
+            if(current + 8 <= max)  setSlot(24, changeAmount(CommandsMenuItems.LIME_BUTTON_2, 8));
+            if(current + 16 <= max) setSlot(25, changeAmount(CommandsMenuItems.LIME_BUTTON_3, 16));
+            if(current + 64 <= max) setSlot(26, changeAmount(CommandsMenuItems.LIME_BUTTON_4, 64));
 
             setSlot(29, cancel(CommandsMenuItems.RED_BUTTON_LEFT));
             setSlot(30, cancel(CommandsMenuItems.RED_BUTTON_RIGHT));

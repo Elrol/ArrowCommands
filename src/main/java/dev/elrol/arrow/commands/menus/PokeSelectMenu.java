@@ -8,6 +8,7 @@ import dev.elrol.arrow.libs.MenuUtils;
 import dev.elrol.arrow.libs.ModTranslations;
 import dev.elrol.arrow.registries.CoreMenuItems;
 import eu.pb4.sgui.api.elements.GuiElementBuilder;
+import net.minecraft.item.Items;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.jetbrains.annotations.NotNull;
@@ -38,14 +39,15 @@ public class PokeSelectMenu extends _CommandMenuBase {
                             click();
                             if(selectedFunction != null) selectedFunction.selected(slot, slotIndex);
                         });
-                menu.setSlot(19 + i, CobblemonUtils.addPokeStatElement(element, slot));
-
-                menu.setSlot(25, MenuUtils.item(CoreMenuItems.BACK_BUTTON, 1, ModTranslations.err("confirm_cancel")).setCallback(() -> {
-                    click();
-                    if(canceledFunction != null) canceledFunction.run();
-                }));
+                setSlot(19 + i, CobblemonUtils.addPokeStatElement(element, slot));
+            } else {
+                setSlot(19 + i, MenuUtils.item(Items.BARRIER, 1, "empty_slot"));
             }
         }
+        menu.setSlot(25, MenuUtils.item(CoreMenuItems.BACK_BUTTON, 1, ModTranslations.err("confirm_cancel")).setCallback(() -> {
+            click();
+            if(canceledFunction != null) canceledFunction.run();
+        }));
     }
 
     @Override

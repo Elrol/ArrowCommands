@@ -85,4 +85,8 @@ public class ListingData {
     public boolean isEmpty() {
         return item.getItem().equals(Items.BEDROCK) || pricePerUnit <= 0;
     }
+
+    public int getMaxUnits() {
+        return maxUnits;
+    }
 }

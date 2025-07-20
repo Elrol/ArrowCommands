@@ -10,6 +10,8 @@ import net.minecraft.registry.SimpleRegistry;
 import net.minecraft.util.Identifier;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+import java.util.UUID;
+
 public interface ShopSaleData {
 
     Codec<ShopSaleData> CODEC = ShopSaleDataType.REGISTRY.getCodec()
@@ -20,7 +22,13 @@ public interface ShopSaleData {
     @NonNull
     ItemStack getDisplayItem();
 
+    @NonNull
+    UUID getOwner();
+
+    boolean isShopOpen();
+
     record ShopSaleDataType<T extends ShopSaleData>(MapCodec<T> codec) {
         public static final Registry<ShopSaleDataType<?>> REGISTRY = new SimpleRegistry<>(RegistryKey.ofRegistry(Identifier.of("arrow", "shop_sale_types")), Lifecycle.stable());
     }
+
 }

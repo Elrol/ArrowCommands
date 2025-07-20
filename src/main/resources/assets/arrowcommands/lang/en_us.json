@@ -40,6 +40,7 @@
   "arrow.info.shop_stock":               "Has Stock",
   "arrow.info.shop_item":                "Has Sale Item",
   "arrow.info.shop_price":               "Has Price",
+  "arrow.info.shop_pokemon":             "Has Pokemon",
 
   "arrow.error.not_player":             "You need to be a player to use this command.",
   "arrow.error.party_disbanded":        "The %1$s party has been disbanded.",
@@ -74,6 +75,8 @@
   "arrow.error.confirm_cancel":         "Cancel",
   "arrow.error.confirm_no":             "No",
   "arrow.error.missing_stock":          "Stock is missing.",
+  "arrow.error.max_shops":              "You can't create any more shops currently.",
+  "arrow.error.different_sale_pokemon": "The pokemon you wanted to sell was different than the pokemon in the party. Try again, but don't change your party up until after the shop has been created.",
 
   "arrow.message.rtp_success":          "Found random position in %1$s attempts.",
   "arrow.message.home_set":             "Your home has been set.",
@@ -157,6 +160,8 @@
   "arrow.menu.item.name.customizer":        "Customizer",
   "arrow.menu.item.name.clear_cart":        "Clear Cart",
   "arrow.menu.item.name.stock":             "Stock",
+
+  "arrow.menu.item.name.empty_slot":        "Empty Slot",
 
   "arrow.spawner.name":                     "%1$s Spawner",
   "arrow.spawner.lore.mob":                 "Mob",

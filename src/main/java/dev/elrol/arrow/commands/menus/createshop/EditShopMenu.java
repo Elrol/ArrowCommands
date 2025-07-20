@@ -1,6 +1,8 @@
 package dev.elrol.arrow.commands.menus.createshop;
 
 import com.cobblemon.mod.common.CobblemonItems;
+import com.cobblemon.mod.common.api.storage.party.PartyPosition;
+import com.cobblemon.mod.common.api.storage.party.PlayerPartyStore;
 import com.cobblemon.mod.common.block.entity.DisplayCaseBlockEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import dev.elrol.arrow.ArrowCore;
@@ -13,10 +15,12 @@ import dev.elrol.arrow.commands.menus._CommandMenuBase;
 import dev.elrol.arrow.commands.registries.CommandsMenuItems;
 import dev.elrol.arrow.commands.libs.PlayerShopUtils;
 import dev.elrol.arrow.commands.registries.ShopSaleDataTypes;
+import dev.elrol.arrow.libs.CobblemonUtils;
 import dev.elrol.arrow.libs.MenuUtils;
 import dev.elrol.arrow.libs.ModTranslations;
 import eu.pb4.sgui.api.elements.GuiElementBuilder;
 import net.fabricmc.fabric.api.util.TriState;
+import net.luckperms.api.util.Tristate;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -30,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class EditShopMenu extends _CommandMenuBase {
 
@@ -47,7 +52,7 @@ public class EditShopMenu extends _CommandMenuBase {
         TempShopData shopData = commandData.playerShopData.tempShop;
         ShopData shop = shopData.shop;
 
-        TriState isSelling = shop.getIsSelling();
+        Tristate isSelling = shop.getIsSelling();
 
         ItemStack displayItem = shop.saleData.getDisplayItem();
         type = shop.saleData.getType();
@@ -63,7 +68,7 @@ public class EditShopMenu extends _CommandMenuBase {
         boolean hasPrice = shop.getPrice() > 0;
         boolean hasDisplayCase = shop.getDisplayCase() != null;
         boolean hasShopItem = shopData.hasDisplayItem();
-        boolean hasSellingSet = !isSelling.equals(TriState.DEFAULT);
+        boolean hasSellingSet = !isSelling.equals(Tristate.UNDEFINED);
         boolean hasStock = !stockList.isEmpty();
         boolean hasShopPokemon = salePokemon != null;
 
@@ -71,12 +76,12 @@ public class EditShopMenu extends _CommandMenuBase {
         boolean isPokeShop = type.equals(ShopSaleDataTypes.POKEMON_SHOP);
 
         // Sell Button
-        setSlot(20, MenuUtils.item(isSelling.equals(TriState.TRUE) ? CommandsMenuItems.SELL_BUTTON_SELECTED : CommandsMenuItems.SELL_BUTTON, 1, Text.literal("Sell")).setCallback(() -> {
+        setSlot(20, MenuUtils.item(isSelling.equals(Tristate.TRUE) ? CommandsMenuItems.SELL_BUTTON_SELECTED : CommandsMenuItems.SELL_BUTTON, 1, Text.literal("Sell")).setCallback(() -> {
             //ToDo change this to allow player to choose to buy pokemon
             if(isPokeShop) return;
             click();
-            if(!isSelling.equals(TriState.TRUE)) {
-                commandData.playerShopData.tempShop.shop.setIsSelling(TriState.TRUE);
+            if(!isSelling.equals(Tristate.TRUE)) {
+                commandData.playerShopData.tempShop.shop.setIsSelling(Tristate.TRUE);
                 data.put(commandData);
                 drawMenu();
             }
@@ -114,8 +119,8 @@ public class EditShopMenu extends _CommandMenuBase {
         setSlot(29, MenuUtils.item(isPokeShop ? CommandsMenuItems.GRAY_BUTTON : isSelling.equals(TriState.FALSE) ? CommandsMenuItems.BUY_BUTTON_SELECTED : CommandsMenuItems.BUY_BUTTON, 1, Text.literal("Buy")).setCallback(() -> {
             if(isPokeShop) return;
             click();
-            if(!isSelling.equals(TriState.FALSE)) {
-                commandData.playerShopData.tempShop.shop.setIsSelling(TriState.FALSE);
+            if(!isSelling.equals(Tristate.FALSE)) {
+                commandData.playerShopData.tempShop.shop.setIsSelling(Tristate.FALSE);
                 data.put(commandData);
                 drawMenu();
             }
@@ -135,6 +140,7 @@ public class EditShopMenu extends _CommandMenuBase {
                 selectMenu.setSelectFunction((pokemon, slot) -> {
                     PokemonShopSaleData pokemonSaleData = (PokemonShopSaleData) commandData.playerShopData.tempShop.shop.saleData;
                     pokemonSaleData.setPokemon(pokemon);
+                    pokemonSaleData.slot = slot;
                     commandData.playerShopData.tempShop.shop.saleData = pokemonSaleData;
                     data.put(commandData);
                     openEditMenu();
@@ -201,6 +207,9 @@ public class EditShopMenu extends _CommandMenuBase {
                 BlockPos pos = commandData.playerShopData.tempShop.shop.getDisplayCase();
                 ItemStack stack = commandData.playerShopData.tempShop.shop.saleData.getDisplayItem();
                 if(PlayerShopUtils.createShop(player)) {
+                    data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
+                    commandData = data.get(new PlayerDataCommands());
+
                     BlockEntity entity = player.getServerWorld().getBlockEntity(pos);
                     if(entity instanceof DisplayCaseBlockEntity caseEntity) {
                         IDisplayShop displayShop = BlockUtils.getDisplayShop(caseEntity);

@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.elrol.arrow.commands.registries.ShopSaleDataTypes;
 import net.fabricmc.fabric.api.util.TriState;
+import net.luckperms.api.util.Tristate;
 import net.minecraft.util.math.BlockPos;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -61,8 +62,8 @@ public class TempShopData {
 
     @NonNull public ShopStage getStage()                    { return stage; }
     public boolean hasPrice()                               { return shop.getPrice() > 0; }
-    public ShopSaleData.ShopSaleDataType<?> getShopType()   { return shop.saleData.getType(); }
-    public TriState getIsSelling()                          { return shop.getIsSelling(); }
+    public ShopSaleData.ShopSaleDataType<?> getShopType()   { return shop.getType(); }
+    public Tristate getIsSelling()                          { return shop.getIsSelling(); }
     public boolean hasDisplayItem()                         { return !shop.saleData.getDisplayItem().isEmpty(); }
     public boolean hasDisplayCase()                         { return shop.getDisplayCase() != null; }
 }
