@@ -2,8 +2,10 @@ package dev.elrol.arrow.commands.libs;
 
 import com.cobblemon.mod.common.api.storage.party.PartyPosition;
 import com.cobblemon.mod.common.api.storage.party.PlayerPartyStore;
+import com.cobblemon.mod.common.block.entity.DisplayCaseBlockEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import dev.elrol.arrow.ArrowCore;
+import dev.elrol.arrow.commands.ArrowCommands;
 import dev.elrol.arrow.commands.data.*;
 import dev.elrol.arrow.commands.interfaces.IDisplayShop;
 import dev.elrol.arrow.commands.registries.ShopSaleDataTypes;
@@ -63,6 +65,19 @@ public class PlayerShopUtils {
         playerShopData.tempShop = null;
         commandData.playerShopData = playerShopData;
         data.put(commandData, true);
+
+        BlockEntity entity = player.getServerWorld().getBlockEntity(pos);
+
+        if(entity instanceof DisplayCaseBlockEntity caseEntity) {
+            IDisplayShop displayShop = BlockUtils.getDisplayShop(caseEntity);
+
+            assert displayShop != null;
+            displayShop.arrowcommands$setOwner(player.getUuid());
+            displayShop.arrowcommands$lock();
+            ArrowCommands.debug("Is locked: " + displayShop.arrowcommands$locked());
+
+            caseEntity.setStack(0, shop.saleData.getDisplayItem());
+        }
 
         return true;
     }

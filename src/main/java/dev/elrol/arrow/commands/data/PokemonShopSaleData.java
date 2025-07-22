@@ -5,8 +5,6 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.elrol.arrow.ArrowCore;
-import dev.elrol.arrow.api.registries.IEconomyRegistry;
 import dev.elrol.arrow.commands.registries.ShopSaleDataTypes;
 import dev.elrol.arrow.libs.CobblemonUtils;
 import net.minecraft.item.ItemStack;
@@ -14,7 +12,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.NotNull;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -52,7 +49,7 @@ public class PokemonShopSaleData implements ShopSaleData {
     }
 
     @Override
-    public @NotNull ShopSaleDataType<?> getType() {
+    public @NotNull ShopSaleData.Type<?> getType() {
         return ShopSaleDataTypes.POKEMON_SHOP;
     }
 

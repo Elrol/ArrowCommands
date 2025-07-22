@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.api.registries.IEconomyRegistry;
 import dev.elrol.arrow.codecs.ArrowCodecs;
+import dev.elrol.arrow.commands.ArrowCommands;
 import dev.elrol.arrow.commands.registries.ShopSaleDataTypes;
 import net.luckperms.api.util.Tristate;
 import net.minecraft.block.entity.BarrelBlockEntity;
@@ -44,6 +45,7 @@ public class ShopData {
         } else if (saleData instanceof PokemonShopSaleData pokeSaleData) {
             data.saleData = pokeSaleData;
         } else {
+            ArrowCommands.LOGGER.debug(saleData.toString());
             data.saleData = null;
         }
         data.setPrice(price);
@@ -137,7 +139,7 @@ public class ShopData {
         return listing;
     }
 
-    public ShopSaleData.ShopSaleDataType<?> getType() { return saleData.getType(); }
+    public ShopSaleData.Type<?> getType() { return saleData.getType(); }
 
     public boolean isShopOpen() {
         boolean isItemShop = getType().equals(ShopSaleDataTypes.ITEM_SHOP);

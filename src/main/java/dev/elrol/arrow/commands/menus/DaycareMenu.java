@@ -113,8 +113,7 @@ public class DaycareMenu extends _CommandMenuBase {
             hatcheryElement.setCallback(() -> {
                 click();
                 commandData.daycareData.hatchEgg(player);
-                data.put(commandData);
-                ArrowCore.INSTANCE.getPlayerDataRegistry().save(player.getUuid(), data);
+                data.put(commandData, true);
                 drawMenu();
             });
 

@@ -1,12 +1,9 @@
 package dev.elrol.arrow.commands.menus.createshop;
 
 import com.cobblemon.mod.common.CobblemonItems;
-import com.cobblemon.mod.common.api.storage.party.PartyPosition;
-import com.cobblemon.mod.common.api.storage.party.PlayerPartyStore;
 import com.cobblemon.mod.common.block.entity.DisplayCaseBlockEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import dev.elrol.arrow.ArrowCore;
-import dev.elrol.arrow.commands.ArrowCommands;
 import dev.elrol.arrow.commands.data.*;
 import dev.elrol.arrow.commands.interfaces.IDisplayShop;
 import dev.elrol.arrow.commands.libs.BlockUtils;
@@ -15,7 +12,6 @@ import dev.elrol.arrow.commands.menus._CommandMenuBase;
 import dev.elrol.arrow.commands.registries.CommandsMenuItems;
 import dev.elrol.arrow.commands.libs.PlayerShopUtils;
 import dev.elrol.arrow.commands.registries.ShopSaleDataTypes;
-import dev.elrol.arrow.libs.CobblemonUtils;
 import dev.elrol.arrow.libs.MenuUtils;
 import dev.elrol.arrow.libs.ModTranslations;
 import eu.pb4.sgui.api.elements.GuiElementBuilder;
@@ -34,11 +30,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class EditShopMenu extends _CommandMenuBase {
 
-    ShopSaleData.ShopSaleDataType<?> type;
+    ShopSaleData.Type<?> type;
 
     public EditShopMenu(ServerPlayerEntity player) {
         super(player, ScreenHandlerType.GENERIC_9X6);
@@ -215,11 +210,6 @@ public class EditShopMenu extends _CommandMenuBase {
                         IDisplayShop displayShop = BlockUtils.getDisplayShop(caseEntity);
 
                         if(displayShop != null) {
-                            displayShop.arrowcommands$setOwner(player.getUuid());
-                            displayShop.arrowcommands$lock();
-                            ArrowCommands.debug("Is locked: " + displayShop.arrowcommands$locked());
-
-                            caseEntity.setStack(0, stack);
                             player.sendMessage(ModTranslations.msg("shop_created"));
                         }
                     } else {

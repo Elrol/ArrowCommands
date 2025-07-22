@@ -14,11 +14,10 @@ import java.util.UUID;
 
 public interface ShopSaleData {
 
-    Codec<ShopSaleData> CODEC = ShopSaleDataType.REGISTRY.getCodec()
-            .dispatch("type", ShopSaleData::getType, ShopSaleDataType::codec);
+    Codec<Type<?>> shopSaleDataTypeCodec = Type.REGISTRY.getCodec();
+    Codec<ShopSaleData> CODEC = shopSaleDataTypeCodec.dispatch("type", ShopSaleData::getType, Type::codec);
 
-    @NonNull
-    ShopSaleDataType<?> getType();
+    ShopSaleData.Type<?> getType();
     @NonNull
     ItemStack getDisplayItem();
 
@@ -27,8 +26,8 @@ public interface ShopSaleData {
 
     boolean isShopOpen();
 
-    record ShopSaleDataType<T extends ShopSaleData>(MapCodec<T> codec) {
-        public static final Registry<ShopSaleDataType<?>> REGISTRY = new SimpleRegistry<>(RegistryKey.ofRegistry(Identifier.of("arrow", "shop_sale_types")), Lifecycle.stable());
+    record Type<T extends ShopSaleData> (MapCodec<T> codec) {
+        public static final Registry<Type<?>> REGISTRY = new SimpleRegistry<>(RegistryKey.ofRegistry(Identifier.of("arrow", "shop_sale_types")), Lifecycle.stable());
     }
 
 }

@@ -3,6 +3,7 @@ package dev.elrol.arrow.commands.mixin;
 import com.cobblemon.mod.common.block.entity.DisplayCaseBlockEntity;
 import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.api.registries.IEconomyRegistry;
+import dev.elrol.arrow.commands.data.ItemShopSaleData;
 import dev.elrol.arrow.commands.data.PlayerDataCommands;
 import dev.elrol.arrow.commands.data.PokemonShopSaleData;
 import dev.elrol.arrow.commands.data.ShopData;
@@ -15,6 +16,7 @@ import dev.elrol.arrow.libs.CobblemonUtils;
 import dev.elrol.arrow.registries.ModEconomyRegistry;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.packet.s2c.play.BlockUpdateS2CPacket;
 import net.minecraft.registry.RegistryWrapper;
@@ -54,7 +56,7 @@ public class DisplayCaseEntityMixin implements IDisplayShop {
                 PlayerDataCommands commandData = data.get(new PlayerDataCommands());
                 ShopData shop = commandData.playerShopData.getShop(pos);
 
-                if(shop != null) {
+                if(shop != null && shop.isShopOpen()) {
                     //ToDo finish setting up functions for result of the ItemSelectMenu
                     ItemSelectMenu menu = (ItemSelectMenu) ArrowCore.INSTANCE.getMenuRegistry().createMenu("item_select", serverPlayer);
                     menu.open(shop.getListing(serverPlayer.getServerWorld()), true, (listingData -> {
@@ -73,15 +75,24 @@ public class DisplayCaseEntityMixin implements IDisplayShop {
                                 econRegistry.withdraw(serverPlayer, BigDecimal.valueOf(total), econRegistry.getPrimary());
                                 pokeSaleData.givePokemon(serverPlayer);
                             }
+                            shop.saleData = pokeSaleData;
                         } else {
+                            ItemShopSaleData itemSaleData = (ItemShopSaleData) shop.saleData;
                             if(shop.getIsSelling().asBoolean()) {
                                 //ToDo handle selling items
                             } else {
                                 //ToDo handle buying items
                             }
+                            shop.saleData = itemSaleData;
                         }
+                        commandData.playerShopData.addShop(pos, shop);
+                        data.put(commandData);
+                        if(!shop.isShopOpen()) {
+                            target.setStack(0, ItemStack.EMPTY);
+                        }
+                        menu.close();
                     }), () -> {
-
+                        menu.close();
                     });
                 }
             }

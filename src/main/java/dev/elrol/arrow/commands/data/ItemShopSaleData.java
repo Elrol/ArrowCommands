@@ -54,7 +54,7 @@ public class ItemShopSaleData implements ShopSaleData {
     public List<BlockPos> getStock() { return stock; }
 
     @Override
-    public @NotNull ShopSaleDataType<?> getType() {
+    public @NotNull ShopSaleData.Type<?> getType() {
         return ShopSaleDataTypes.ITEM_SHOP;
     }
 
