@@ -15,15 +15,26 @@ public class ListingData {
         CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 ItemStack.CODEC.fieldOf("item").forGetter(data -> data.item),
                 Codec.INT.fieldOf("pricePerUnit").forGetter(data -> data.pricePerUnit),
-                Codec.INT.fieldOf("units").forGetter(data -> data.units)
-        ).apply(instance, ListingData::new));
+                Codec.INT.fieldOf("units").forGetter(data -> data.units),
+                Codec.INT.optionalFieldOf("minUnits", 0).forGetter(ListingData::getMinUnits),
+                Codec.INT.optionalFieldOf("maxUnits", 0).forGetter(ListingData::getMaxUnits),
+                Codec.BOOL.optionalFieldOf("isSelling", false).forGetter(ListingData::isSelling)
+        ).apply(instance, (item, pricePerUnit, units, minUnits, maxUnits, isSelling) -> {
+            ListingData data = new ListingData(item, pricePerUnit, units);
+            data.setMinUnits(minUnits);
+            data.setMaxUnits(maxUnits);
+            data.setSelling(isSelling);
+            return data;
+        }));
     }
 
     ItemStack item;
     int pricePerUnit;
     int units;
-    int maxUnits = 0;
+    int minUnits = 0;
+    int maxUnits = -1;
     int maxStackSize;
+    boolean isSelling = true;
 
     public ListingData(ItemStack item, int pricePerUnit, int units) {
         this.item = item;
@@ -35,7 +46,7 @@ public class ListingData {
     public ListingData() {
         this.item = new ItemStack(Items.BEDROCK);
         this.pricePerUnit = 0;
-        this.units = 1;
+        this.units = 0;
         maxStackSize = item.getMaxCount();
     }
 
@@ -45,8 +56,8 @@ public class ListingData {
     }
 
     public void checkUnits() {
-        if(units < 1) units = 1;
-        if(units > maxUnits && maxUnits > 0) units = maxUnits;
+        if(units < minUnits) units = minUnits;
+        if(units > maxUnits && maxUnits >= 0) units = maxUnits;
     }
 
     public int getPricePerUnit() {
@@ -70,6 +81,11 @@ public class ListingData {
         return item;
     }
 
+    public void setMinUnits(int minUnits) {
+        this.minUnits = minUnits;
+        this.units = minUnits;
+    }
+
     public void setMaxUnits(int maxUnits) {
         this.maxUnits = maxUnits;
     }
@@ -82,11 +98,25 @@ public class ListingData {
         return maxStackSize;
     }
 
+    /**
+     * @return If this listing is selling to the player
+     */
+    public boolean isSelling() {
+        return isSelling;
+    }
+
+    public void setSelling(boolean isSelling) {
+        this.isSelling = isSelling;
+    }
+
     public boolean isEmpty() {
         return item.getItem().equals(Items.BEDROCK) || pricePerUnit <= 0;
     }
 
     public int getMaxUnits() {
         return maxUnits;
+    }
+    public int getMinUnits() {
+        return minUnits;
     }
 }

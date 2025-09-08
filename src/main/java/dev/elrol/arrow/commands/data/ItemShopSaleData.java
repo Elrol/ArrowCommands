@@ -9,29 +9,23 @@ import net.minecraft.util.math.BlockPos;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public class ItemShopSaleData implements ShopSaleData {
 
     public static final MapCodec<ItemShopSaleData> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Codec.STRING.fieldOf("owner").forGetter(data -> data.owner.toString()),
-            ItemStack.CODEC.optionalFieldOf("item").forGetter(data -> Optional.ofNullable(data.item)),
-            BlockPos.CODEC.listOf().fieldOf("stock").forGetter(data -> data.stock),
-            Codec.INT.fieldOf("amount").forGetter(data -> data.amount)
-    ).apply(instance, (owner, item, stock, amount) -> {
+            ItemStack.CODEC.optionalFieldOf("item", null).forGetter(data -> data.item),
+            BlockPos.CODEC.optionalFieldOf("stock", null).forGetter(data -> data.stock)
+    ).apply(instance, (owner, item, stock) -> {
         ItemShopSaleData data = new ItemShopSaleData(UUID.fromString(owner));
-        item.ifPresent(data::setItem);
-        data.stock.addAll(stock);
-        data.amount = amount;
+        data.setItem(item);
+        data.stock = stock;
         return data;
     }));
 
     ItemStack item = null;
-    List<BlockPos> stock = new ArrayList<>();
-    int amount = 1;
+    BlockPos stock = null;
     final UUID owner;
 
     public ItemShopSaleData(UUID owner) {
@@ -39,19 +33,23 @@ public class ItemShopSaleData implements ShopSaleData {
     }
 
     public void setItem(ItemStack item) {
-        this.item = item;
+        this.item = item.isEmpty() ? null : item.copy();
     }
 
     public ItemStack getItemStack() {
         if(item == null) return ItemStack.EMPTY;
-        return item;
+        return item.copy();
     }
 
-    public void addStock(BlockPos pos) {
-        if(stock.contains(pos)) return;
-        stock.add(pos);
+    public int getAmount() {
+        return item.getCount();
     }
-    public List<BlockPos> getStock() { return stock; }
+
+    public void setStock(BlockPos pos) {
+        stock = pos;
+    }
+
+    public BlockPos getStock() { return stock; }
 
     @Override
     public @NotNull ShopSaleData.Type<?> getType() {

@@ -77,6 +77,9 @@
   "arrow.error.missing_stock":          "Stock is missing.",
   "arrow.error.max_shops":              "You can't create any more shops currently.",
   "arrow.error.different_sale_pokemon": "The pokemon you wanted to sell was different than the pokemon in the party. Try again, but don't change your party up until after the shop has been created.",
+  "arrow.error.not_overworld":          "You can only do this in the Overworld.",
+  "arrow.error.display_overworld":      "You can only create a shop in the Overworld.",
+  "arrow.error.stock_overworld":        "You can only have stock set in the Overworld",
 
   "arrow.message.rtp_success":          "Found random position in %1$s attempts.",
   "arrow.message.home_set":             "Your home has been set.",
@@ -136,6 +139,10 @@
   "arrow.message.confirm_accept":       "Confirm",
   "arrow.message.confirm_yes":          "Yes",
   "arrow.message.interact_with_storage":"Sneak + Right click, using a tripwire hook, on a chest or barrel that you want to use for stocking the shop.",
+  "arrow.message.owner_item_sold":      "%1$s bought %2$s x %3$s for %4$s",
+  "arrow.message.owner_item_bought":    "%1$s sold %2$s x %3$s for %4$s",
+  "arrow.message.player_item_sold":     "You sold %1$s x %2$s for %3$s",
+  "arrow.message.player_item_bought":   "You bought %1$s x %2$s for %3$s",
 
   "arrow.warn.teleporting":             "Teleporting...",
 

@@ -6,12 +6,15 @@ import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.commands._CommandBase;
 import dev.elrol.arrow.commands.data.PlayerDataCommands;
 import dev.elrol.arrow.commands.libs.CommandsConstants;
+import dev.elrol.arrow.commands.libs.PlayerShopUtils;
 import dev.elrol.arrow.libs.ModTranslations;
 import dev.elrol.arrow.libs.PermUtils;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+
+import java.util.Objects;
 
 public class CreateShopCommand extends _CommandBase {
     @Override
@@ -29,6 +32,10 @@ public class CreateShopCommand extends _CommandBase {
     private int noArgs(CommandContext<ServerCommandSource> context) {
         ServerPlayerEntity player = getPlayer(context);
         if(player != null) {
+            if(!PlayerShopUtils.isInOverworld(player)) {
+                player.sendMessage(ModTranslations.err("not_overworld"));
+                return 0;
+            }
             //Check to see how many shops a player can have
             int maxShops = PermUtils.getMetaData(player).getMetaValue(CommandsConstants.MetaKeys.MAX_PLAYER_SHOPS, Integer::parseInt).orElse(0);
             int addShops = PermUtils.getMetaData(player).getMetaValue(CommandsConstants.MetaKeys.ADD_PLAYER_SHOPS, Integer::parseInt).orElse(0);

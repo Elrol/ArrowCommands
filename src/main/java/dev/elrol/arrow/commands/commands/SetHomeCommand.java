@@ -9,7 +9,7 @@ import dev.elrol.arrow.commands.ArrowCommands;
 import dev.elrol.arrow.commands._CommandBase;
 import dev.elrol.arrow.commands.commands.suggestions.HomeSuggestionProvider;
 import dev.elrol.arrow.commands.data.PlayerDataCommands;
-import dev.elrol.arrow.data.PlayerData;
+import dev.elrol.arrow.data.ArrowPlayerData;
 import dev.elrol.arrow.libs.ModTranslations;
 import dev.elrol.arrow.libs.PermUtils;
 import net.minecraft.command.CommandRegistryAccess;
@@ -42,7 +42,7 @@ public class SetHomeCommand extends _CommandBase {
         if(player != null) {
             try {
                 IPlayerDataRegistry dataRegistry = ArrowCore.INSTANCE.getPlayerDataRegistry();
-                PlayerData data = dataRegistry.getPlayerData(player);
+                ArrowPlayerData data = dataRegistry.getPlayerData(player);
                 PlayerDataCommands commandData = data.get(new PlayerDataCommands());
 
                 int maxHomes = PermUtils.getMetaData(player).getMetaValue("homes", Integer::parseInt).orElse(1);
@@ -69,7 +69,7 @@ public class SetHomeCommand extends _CommandBase {
         ServerPlayerEntity player = getPlayer(context);
         String name = StringArgumentType.getString(context, "name");
         if(player != null) {
-            PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
+            ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
             PlayerDataCommands commandData = data.get(new PlayerDataCommands());
             int maxHomes = PermUtils.getMetaData(player).getMetaValue("homes", Integer::parseInt).orElse(1);
             int currentHomes = commandData.homes.size();

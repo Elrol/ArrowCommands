@@ -29,6 +29,8 @@ import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class EditShopMenu extends _CommandMenuBase {
@@ -52,28 +54,27 @@ public class EditShopMenu extends _CommandMenuBase {
         ItemStack displayItem = shop.saleData.getDisplayItem();
         type = shop.saleData.getType();
 
-        List<BlockPos> stockList = new ArrayList<>();
+        BlockPos stock = null;
         Pokemon salePokemon = null;
         if(shop.saleData instanceof ItemShopSaleData itemShopSaleData) {
-            stockList = new ArrayList<>(itemShopSaleData.getStock());
+            stock = itemShopSaleData.getStock();
         } else if(shop.saleData instanceof PokemonShopSaleData pokemonShopSaleData) {
-            salePokemon = pokemonShopSaleData.getPokemon();
+            salePokemon = pokemonShopSaleData.getPokemon().orElse(null);
         }
 
         boolean hasPrice = shop.getPrice() > 0;
         boolean hasDisplayCase = shop.getDisplayCase() != null;
         boolean hasShopItem = shopData.hasDisplayItem();
         boolean hasSellingSet = !isSelling.equals(Tristate.UNDEFINED);
-        boolean hasStock = !stockList.isEmpty();
+        boolean hasStock = stock != null;
         boolean hasShopPokemon = salePokemon != null;
+
 
         boolean isItemShop = type.equals(ShopSaleDataTypes.ITEM_SHOP);
         boolean isPokeShop = type.equals(ShopSaleDataTypes.POKEMON_SHOP);
 
         // Sell Button
         setSlot(20, MenuUtils.item(isSelling.equals(Tristate.TRUE) ? CommandsMenuItems.SELL_BUTTON_SELECTED : CommandsMenuItems.SELL_BUTTON, 1, Text.literal("Sell")).setCallback(() -> {
-            //ToDo change this to allow player to choose to buy pokemon
-            if(isPokeShop) return;
             click();
             if(!isSelling.equals(Tristate.TRUE)) {
                 commandData.playerShopData.tempShop.shop.setIsSelling(Tristate.TRUE);
@@ -96,11 +97,14 @@ public class EditShopMenu extends _CommandMenuBase {
 
         // Stock Button
         if(isItemShop) {
-            List<Text> stockLore = new ArrayList<>();
-            if(hasStock) stockList.forEach(stock -> stockLore.add(ModTranslations.literal(stock.toShortString()).formatted(Formatting.DARK_GREEN)));
-            else stockLore.add(ModTranslations.err("missing_stock"));
+            Text stockLore = Text.empty();
+            if(hasStock) {
+                stockLore = ModTranslations.literal(stock.toShortString()).formatted(Formatting.DARK_GREEN);
+            } else {
+                stockLore = ModTranslations.err("missing_stock");
+            }
 
-            setSlot(24, MenuUtils.itemWithLore(Items.CHEST, 1, "stock", stockLore).setCallback(() -> {
+            setSlot(24, MenuUtils.itemWithLore(Items.CHEST, 1, "stock", Collections.singletonList(stockLore)).setCallback(() -> {
                 click();
                 player.sendMessage(ModTranslations.msg("interact_with_storage"));
                 commandData.playerShopData.tempShop.setStage(TempShopData.ShopStage.stock);
@@ -111,14 +115,14 @@ public class EditShopMenu extends _CommandMenuBase {
 
         // Buying Button
         // TODO enable buying of pokemon with certain requirements
-        setSlot(29, MenuUtils.item(isPokeShop ? CommandsMenuItems.GRAY_BUTTON : isSelling.equals(TriState.FALSE) ? CommandsMenuItems.BUY_BUTTON_SELECTED : CommandsMenuItems.BUY_BUTTON, 1, Text.literal("Buy")).setCallback(() -> {
+        setSlot(29, MenuUtils.item(isPokeShop ? CommandsMenuItems.GRAY_BUTTON : isSelling.equals(Tristate.FALSE) ? CommandsMenuItems.BUY_BUTTON_SELECTED : CommandsMenuItems.BUY_BUTTON, 1, Text.literal("Buy")).setCallback(() -> {
             if(isPokeShop) return;
             click();
             if(!isSelling.equals(Tristate.FALSE)) {
                 commandData.playerShopData.tempShop.shop.setIsSelling(Tristate.FALSE);
-                data.put(commandData);
-                drawMenu();
             }
+            data.put(commandData);
+            drawMenu();
         }));
 
         //Shop Item Button
@@ -189,15 +193,18 @@ public class EditShopMenu extends _CommandMenuBase {
         lore.add(ModTranslations.info("shop_mode").formatted(hasShopMode ? Formatting.DARK_GREEN : Formatting.DARK_RED));
         lore.add(ModTranslations.info("shop_display_case").formatted(hasDisplayCase ? Formatting.DARK_GREEN : Formatting.DARK_RED));
         if(type.equals(ShopSaleDataTypes.ITEM_SHOP)) {
+            canSave = canSave && hasStock;
             lore.add(ModTranslations.info("shop_stock").formatted(hasStock ? Formatting.DARK_GREEN : Formatting.DARK_RED));
             lore.add(ModTranslations.info("shop_item").formatted(hasShopItem ? Formatting.DARK_GREEN : Formatting.DARK_RED));
         } else if(type.equals(ShopSaleDataTypes.POKEMON_SHOP)) {
+            canSave = canSave && hasPokemon;
             lore.add(ModTranslations.info("shop_pokemon").formatted(hasPokemon ? Formatting.DARK_GREEN : Formatting.DARK_RED));
         }
         lore.add(ModTranslations.info("shop_price").formatted(hasPrice ? Formatting.DARK_GREEN : Formatting.DARK_RED));
 
+        boolean finalCanSave = canSave;
         GuiElementBuilder element = MenuUtils.item(canSave ? enabled : disabled, 1, Text.literal("Confirm").formatted(canSave ? Formatting.GREEN : Formatting.RED)).setCallback(() -> {
-            if(canSave) {
+            if(finalCanSave) {
                 click();
                 BlockPos pos = commandData.playerShopData.tempShop.shop.getDisplayCase();
                 ItemStack stack = commandData.playerShopData.tempShop.shop.saleData.getDisplayItem();

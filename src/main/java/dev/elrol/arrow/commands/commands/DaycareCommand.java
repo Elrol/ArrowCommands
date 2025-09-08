@@ -6,7 +6,7 @@ import dev.elrol.arrow.commands.ArrowCommands;
 import dev.elrol.arrow.commands._CommandBase;
 import dev.elrol.arrow.commands.data.PlayerDataCommands;
 import dev.elrol.arrow.commands.menus.DaycareMenu;
-import dev.elrol.arrow.data.PlayerData;
+import dev.elrol.arrow.data.ArrowPlayerData;
 import dev.elrol.arrow.data.PlayerDataCore;
 import dev.elrol.arrow.libs.ModTranslations;
 import dev.elrol.arrow.libs.PermUtils;
@@ -30,7 +30,7 @@ public class DaycareCommand extends _CommandBase {
                 .executes(context -> {
                     ServerPlayerEntity player = getPlayer(context);
                     if(player != null) {
-                        PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
+                        ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
                         PlayerDataCore coreData = data.get(new PlayerDataCore());
                         PlayerDataCommands commandData = data.get(new PlayerDataCommands());
 

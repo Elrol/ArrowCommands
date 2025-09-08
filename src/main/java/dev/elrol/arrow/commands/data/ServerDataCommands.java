@@ -5,7 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.api.data.IServerData;
 import dev.elrol.arrow.data.ExactLocation;
-import dev.elrol.arrow.data.PlayerData;
+import dev.elrol.arrow.data.ArrowPlayerData;
 import dev.elrol.arrow.data.PlayerDataCore;
 import dev.elrol.arrow.libs.ModTranslations;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -97,7 +97,7 @@ public class ServerDataCommands implements IServerData {
             BlockPos pos = player.getServerWorld().getSpawnPos();
             player.teleport(player.getServerWorld(), pos.getX(), pos.getY(), pos.getZ(), 0f, 0f);
         } else {
-            PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
+            ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
             PlayerDataCore coreData = data.get(new PlayerDataCore());
             coreData.logTeleport(player);
             data.put(coreData);

@@ -9,7 +9,7 @@ import dev.elrol.arrow.commands.data.ServerShopItem;
 import dev.elrol.arrow.commands.menus._CommandPageMenuBase;
 import dev.elrol.arrow.commands.registries.CommandsMenuItems;
 import dev.elrol.arrow.commands.registries.ServerShopRegistry;
-import dev.elrol.arrow.data.PlayerData;
+import dev.elrol.arrow.data.ArrowPlayerData;
 import dev.elrol.arrow.libs.MenuUtils;
 import dev.elrol.arrow.libs.ModTranslations;
 import dev.elrol.arrow.libs.PermUtils;
@@ -108,7 +108,7 @@ public class ItemShopMenu extends _CommandPageMenuBase {
     protected <T> GuiElementBuilder createElement(String key, Map<String, T> map) {
         ServerShopItem shopItem = ((Map<String, ServerShopItem>) map).get(key);
         ItemStack item = shopItem.item;
-        GuiElementBuilder in = MenuUtils.itemStack(item.copyWithCount(1), item.getName());
+        GuiElementBuilder in = MenuUtils.itemStack(item.copy(), item.getName());
 
         in.addLoreLine(ModTranslations.literal(ArrowCore.INSTANCE.getEconomyRegistry().formatAmount(shopItem.cost)).formatted(Formatting.GREEN));
         return in.setCallback(() -> {
@@ -121,11 +121,11 @@ public class ItemShopMenu extends _CommandPageMenuBase {
             // Create a new ItemSelect Menu to allow the player to shop
             ItemSelectMenu selectMenu = (ItemSelectMenu) ArrowCore.INSTANCE.getMenuRegistry().createMenu("item_select", player);
 
-            selectMenu.open(commandData.shoppingData.currentCart, false, (listing) -> {
+            selectMenu.open(commandData.shoppingData.currentCart, false, false, (listing) -> {
                 click();
 
                 // Confirms the current cart and adds it to the shopping cart
-                PlayerData data1 = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
+                ArrowPlayerData data1 = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
                 PlayerDataCommands commandData1 = data1.get(new PlayerDataCommands());
                 commandData1.shoppingData.currentCart = listing;
                 commandData1.shoppingData.confirmCurrentCart();
@@ -143,7 +143,7 @@ public class ItemShopMenu extends _CommandPageMenuBase {
                 click();
 
                 // Clears the current cart and returns to the Item Shop menu
-                PlayerData data1 = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
+                ArrowPlayerData data1 = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
                 PlayerDataCommands commandData1 = data1.get(new PlayerDataCommands());
                 commandData1.shoppingData.cancelCurrentCart();
                 data1.put(commandData1);

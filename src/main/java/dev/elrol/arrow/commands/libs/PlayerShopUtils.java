@@ -9,10 +9,11 @@ import dev.elrol.arrow.commands.ArrowCommands;
 import dev.elrol.arrow.commands.data.*;
 import dev.elrol.arrow.commands.interfaces.IDisplayShop;
 import dev.elrol.arrow.commands.registries.ShopSaleDataTypes;
-import dev.elrol.arrow.data.PlayerData;
+import dev.elrol.arrow.data.ArrowPlayerData;
 import dev.elrol.arrow.libs.CobblemonUtils;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -32,13 +33,13 @@ public class PlayerShopUtils {
 
     @Nullable
     public static ShopData getShop(UUID uuid, BlockPos pos) {
-        PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(uuid);
+        ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(uuid);
         PlayerDataCommands commandData = data.get(new PlayerDataCommands());
         return commandData.playerShopData.getShop(pos);
     }
 
     public static boolean createShop(ServerPlayerEntity player) {
-        PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
+        ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
         PlayerDataCommands commandData = data.get(new PlayerDataCommands());
         PlayerShopData playerShopData = commandData.playerShopData;
         TempShopData tempShopData = playerShopData.tempShop;
@@ -83,9 +84,12 @@ public class PlayerShopUtils {
     }
 
     public static void removeShop(ServerPlayerEntity player, BlockPos pos) {
-        if(!isShop(player.getWorld(), pos)) return;
+        if(!isShop(player.getWorld(), pos)) {
+            ArrowCommands.LOGGER.error("Tried to remove a shop that isn't a shop at {}", pos.toShortString());
+            return;
+        }
 
-        PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
+        ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
         PlayerDataCommands commandData = data.get(new PlayerDataCommands());
         ShopData shop = commandData.playerShopData.getShop(pos);
         if(shop != null && shop.saleData instanceof PokemonShopSaleData pokeSaleData) {
@@ -93,5 +97,11 @@ public class PlayerShopUtils {
         }
         commandData.playerShopData.removeShop(pos);
         data.put(commandData, true);
+    }
+
+    public static boolean isInOverworld(ServerPlayerEntity player) {
+        MinecraftServer server = player.getServer();
+        if(server == null) return false;
+        return server.getWorld(World.OVERWORLD) == player.getServerWorld();
     }
 }

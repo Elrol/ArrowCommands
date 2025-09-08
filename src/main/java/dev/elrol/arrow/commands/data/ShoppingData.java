@@ -59,7 +59,7 @@ public class ShoppingData {
         economyRegistry.withdraw(player.getUuid(), BigDecimal.valueOf(getTotalPrice()));
 
         for(ListingData listingData : shoppingCart) {
-            int amount = listingData.getUnits();
+            int amount = listingData.getUnits() * listingData.item.getCount();
             int max = listingData.getMaxStackSize();
             while(amount > 0) {
                 int toTake = Math.min(amount, max);

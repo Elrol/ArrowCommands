@@ -15,4 +15,5 @@ public class ShopSaleDataTypes {
         return Registry.register(ShopSaleData.Type.REGISTRY, Identifier.of("arrow", id), type);
     }
 
+    public static void init() {}
 }

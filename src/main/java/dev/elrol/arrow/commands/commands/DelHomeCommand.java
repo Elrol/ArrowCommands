@@ -7,7 +7,7 @@ import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.commands._CommandBase;
 import dev.elrol.arrow.commands.commands.suggestions.HomeSuggestionProvider;
 import dev.elrol.arrow.commands.data.PlayerDataCommands;
-import dev.elrol.arrow.data.PlayerData;
+import dev.elrol.arrow.data.ArrowPlayerData;
 import dev.elrol.arrow.libs.ModTranslations;
 import dev.elrol.arrow.libs.PermUtils;
 import dev.elrol.arrow.registries.ModPlayerDataRegistry;
@@ -34,7 +34,7 @@ public class DelHomeCommand extends _CommandBase {
         ServerPlayerEntity player = getPlayer(context);
         String name = StringArgumentType.getString(context, "name");
         if(player != null) {
-            PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
+            ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
             PlayerDataCommands commandData = data.get(new PlayerDataCommands());
             if(commandData.delHome(name)) {
                 context.getSource().sendMessage(ModTranslations.msg("home_deleted", name));

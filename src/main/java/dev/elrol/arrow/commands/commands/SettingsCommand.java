@@ -5,7 +5,7 @@ import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.commands.ArrowCommands;
 import dev.elrol.arrow.commands._CommandBase;
 import dev.elrol.arrow.commands.data.PlayerDataCommands;
-import dev.elrol.arrow.data.PlayerData;
+import dev.elrol.arrow.data.ArrowPlayerData;
 import dev.elrol.arrow.data.PlayerDataCore;
 import dev.elrol.arrow.libs.ModTranslations;
 import dev.elrol.arrow.menus._MenuBase;

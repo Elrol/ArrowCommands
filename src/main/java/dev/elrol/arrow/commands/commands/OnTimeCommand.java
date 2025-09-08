@@ -6,17 +6,15 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.commands._CommandBase;
-import dev.elrol.arrow.commands.commands.suggestions.HomeSuggestionProvider;
 import dev.elrol.arrow.commands.commands.suggestions.PlayerSuggestionProvider;
 import dev.elrol.arrow.commands.data.OnTimeData;
 import dev.elrol.arrow.commands.data.PlayerDataCommands;
 import dev.elrol.arrow.commands.libs.DateTimeUtils;
-import dev.elrol.arrow.data.PlayerData;
+import dev.elrol.arrow.data.ArrowPlayerData;
 import dev.elrol.arrow.data.PlayerDataCore;
 import dev.elrol.arrow.libs.ModTranslations;
 import dev.elrol.arrow.libs.PermUtils;
 import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -47,7 +45,7 @@ public class OnTimeCommand extends _CommandBase {
     private int noArgs(CommandContext<ServerCommandSource> context) {
         ServerPlayerEntity player = getPlayer(context);
         if(player != null) {
-            PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
+            ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
             PlayerDataCommands commandData = data.get(new PlayerDataCommands());
             commandData.onTimeData.logTime();
             data.put(commandData);
@@ -72,9 +70,9 @@ public class OnTimeCommand extends _CommandBase {
 
 
         if(player != null) {
-            PlayerData data = null;
+            ArrowPlayerData data = null;
 
-            for(PlayerData playerData : ArrowCore.INSTANCE.getPlayerDataRegistry().getLoadedData().values()) {
+            for(ArrowPlayerData playerData : ArrowCore.INSTANCE.getPlayerDataRegistry().getLoadedData().values()) {
                 PlayerDataCore coreData = playerData.get(new PlayerDataCore());
                 if(coreData.username.getString().equalsIgnoreCase(targetName)) {
                     data = playerData;

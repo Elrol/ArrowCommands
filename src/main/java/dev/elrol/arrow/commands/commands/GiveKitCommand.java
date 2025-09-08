@@ -10,7 +10,7 @@ import dev.elrol.arrow.commands.commands.suggestions.KitSuggestionProvider;
 import dev.elrol.arrow.commands.data.KitData;
 import dev.elrol.arrow.commands.data.PlayerDataCommands;
 import dev.elrol.arrow.commands.registries.KitRegistry;
-import dev.elrol.arrow.data.PlayerData;
+import dev.elrol.arrow.data.ArrowPlayerData;
 import dev.elrol.arrow.libs.PermUtils;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.EntityArgumentType;
@@ -46,7 +46,7 @@ public class GiveKitCommand extends _CommandBase {
         if(kit == null) return 0;
 
         players.forEach(player -> {
-            PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
+            ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
             PlayerDataCommands commandData = data.get(new PlayerDataCommands());
             kit.giveKit(player);
             if(kit.cooldown > 0 || kit.oneTimeUse) {

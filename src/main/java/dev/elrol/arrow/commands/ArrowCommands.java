@@ -31,9 +31,11 @@ import dev.elrol.arrow.commands.menus.shops.ItemSelectMenu;
 import dev.elrol.arrow.commands.menus.shops.ItemShopMenu;
 import dev.elrol.arrow.commands.menus.shops.ShoppingCartMenu;
 import dev.elrol.arrow.commands.registries.*;
-import dev.elrol.arrow.data.PlayerData;
+import dev.elrol.arrow.data.ArrowPlayerData;
 import dev.elrol.arrow.data.PlayerDataCore;
+import dev.elrol.arrow.data.PlayerDataType;
 import dev.elrol.arrow.libs.*;
+import dev.elrol.arrow.registries.PlayerDataTypes;
 import eu.pb4.placeholders.api.PlaceholderResult;
 import eu.pb4.placeholders.api.Placeholders;
 import kotlin.Unit;
@@ -41,6 +43,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
@@ -82,9 +85,16 @@ public class ArrowCommands implements ModInitializer {
     public static final CommandsMenuItems MENU_ITEMS = new CommandsMenuItems();
     public static final Timer TIMER = new Timer();
 
+    static {
+        PlayerDataTypes.register(PlayerDataCommands.DATA_ID, PlayerDataCommands.MAP_CODEC);
+        PlayerDataTypes.get(PlayerDataCommands.DATA_ID);
+        ShopSaleDataTypes.init();
+    }
+
     @Override
     public void onInitialize() {
         if(FabricLoader.getInstance().getEnvironmentType().equals(EnvType.CLIENT)) return;
+
         CONFIG = CONFIG.load();
 
         registerEvents();
@@ -129,34 +139,28 @@ public class ArrowCommands implements ModInitializer {
         IEventRegistry eventRegistry = ArrowCore.INSTANCE.getEventRegistry();
 
         eventRegistry.registerEvent(() -> ServerMessageEvents.ALLOW_CHAT_MESSAGE.register((message, sender, params) -> {
-            PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(sender);
+            ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(sender);
             PlayerDataCommands commandData = data.get(new PlayerDataCommands());
             TempShopData shopData = commandData.playerShopData.tempShop;
             if(shopData == null || !shopData.getStage().equals(TempShopData.ShopStage.price)) return true;
 
-            boolean needsPrice = !shopData.hasPrice();
-
-            if(needsPrice) {
-                String string = message.getContent().getString();
-                if(string.equalsIgnoreCase("cancel")) {
-                    sender.sendMessage(ModTranslations.msg("price_canceled"));
-                    shopData.resetStage();
-                } else {
-                    try {
-                        int price = Integer.parseInt(string);
-                        shopData.shop.setPrice(price);
-                        shopData.resetStage();
-                    } catch (NumberFormatException e) {
-                        sender.sendMessage(ModTranslations.err("invalid_price"));
-                    }
-                }
-                commandData.playerShopData.tempShop = shopData;
-                data.put(commandData);
-                ArrowCore.INSTANCE.getMenuRegistry().createMenu("edit_shop_menu", sender).open();
-                return false;
+            String string = message.getContent().getString();
+            if(string.equalsIgnoreCase("cancel")) {
+                sender.sendMessage(ModTranslations.msg("price_canceled"));
+                shopData.resetStage();
             } else {
-                return true;
+                try {
+                    int price = Integer.parseInt(string);
+                    shopData.shop.setPrice(price);
+                    shopData.resetStage();
+                } catch (NumberFormatException e) {
+                    sender.sendMessage(ModTranslations.err("invalid_price"));
+                }
             }
+            commandData.playerShopData.tempShop = shopData;
+            data.put(commandData);
+            ArrowCore.INSTANCE.getMenuRegistry().createMenu("edit_shop_menu", sender).open();
+            return false;
         }));
 
         eventRegistry.registerEvent(() -> ServerLifecycleEvents.SERVER_STARTED.register((server) -> {
@@ -202,7 +206,7 @@ public class ArrowCommands implements ModInitializer {
                 @Override
                 public void run() {
                     server.getPlayerManager().getPlayerList().forEach(player -> {
-                        PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
+                        ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
                         PlayerDataCommands commandData = data.get(new PlayerDataCommands());
                         commandData.onTimeData.logTime();
                         data.put(commandData, true);
@@ -270,7 +274,7 @@ public class ArrowCommands implements ModInitializer {
 
         eventRegistry.registerEvent(() -> ServerLivingEntityEvents.ALLOW_DEATH.register(((entity, damageSource, damageAmount) -> {
             if(entity instanceof ServerPlayerEntity player) {
-                PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
+                ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
                 PlayerDataCore coreData = data.get(new PlayerDataCore());
                 coreData.logTeleport(player);
                 data.put(coreData);
@@ -291,14 +295,18 @@ public class ArrowCommands implements ModInitializer {
                 player.sendMessage(ModTranslations.msg("placed_spawner"));
                 SpawnerUtils.fromItemStack(spawnerEntity, stack);
             } else if(entity instanceof DisplayCaseBlockEntity) {
-                PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
+                ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
                 PlayerDataCommands commandData = data.get(new PlayerDataCommands());
                 TempShopData shopData = commandData.playerShopData.tempShop;
                 if(shopData != null && !shopData.hasDisplayCase() && shopData.getStage().equals(TempShopData.ShopStage.displayCase)) {
+                    if(!PlayerShopUtils.isInOverworld(player)) {
+                        player.sendMessage(ModTranslations.err("display_case_overworld"));
+                        return;
+                    }
                     shopData.shop.setDisplayCase(pos);
                     if(entity instanceof IDisplayShop displayShop){
                         displayShop.arrowcommands$lock();
-                        ArrowCommands.LOGGER.error("Case was Locked");
+                        ArrowCommands.debug("Locking Display Case");
                     }
                     shopData.resetStage();
                     commandData.playerShopData.tempShop = shopData;
@@ -312,11 +320,11 @@ public class ArrowCommands implements ModInitializer {
 
             if(entity instanceof IDisplayShop displayShop && player instanceof ServerPlayerEntity serverPlayer) {
                 ConfirmMenu confirm = (ConfirmMenu) ArrowCore.INSTANCE.getMenuRegistry().createMenu("confirm", serverPlayer);
-                if(!displayShop.arrowcommands$isShop()) return true;
+                if(!displayShop.arrowcommands$isShop()) return !displayShop.arrowcommands$locked();
                 if(player.isCreative()) {
                     confirm.init("Do you want to remove this shop?", () -> {
-                        world.setBlockState(pos, Blocks.AIR.getDefaultState());
                         PlayerShopUtils.removeShop(serverPlayer, pos);
+                        world.setBlockState(pos, Blocks.AIR.getDefaultState());
                         confirm.close();
                     }, confirm::close);
                     confirm.open();
@@ -326,9 +334,9 @@ public class ArrowCommands implements ModInitializer {
                 UUID shopOwner = displayShop.arrowcommands$getOwner();
                 if(shopOwner != null && player.getUuid().equals(shopOwner)) {
                     confirm.init("confirm_remove_shop", "confirm_yes", "confirm_no", () -> {
+                        PlayerShopUtils.removeShop(serverPlayer, pos);
                         world.setBlockState(pos, Blocks.AIR.getDefaultState());
                         player.giveItemStack(new ItemStack(CobblemonItems.DISPLAY_CASE, 1));
-                        PlayerShopUtils.removeShop(serverPlayer, pos);
                         confirm.close();
                     }, confirm::close);
                     confirm.open();
@@ -360,7 +368,7 @@ public class ArrowCommands implements ModInitializer {
                     IDisplayShop displayShop = BlockUtils.getDisplayShop(entity);
                     // TODO make this better
                     if (displayShop == null || !displayShop.arrowcommands$isShop()) {
-                        PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
+                        ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
                         PlayerDataCommands commandData = data.get(new PlayerDataCommands());
                         TempShopData shopData = commandData.playerShopData.tempShop;
 
@@ -377,15 +385,19 @@ public class ArrowCommands implements ModInitializer {
                         }
                     }
                 } else if (entity instanceof LockableContainerBlockEntity && player.getMainHandStack().isOf(Items.TRIPWIRE_HOOK) && player.isSneaking()) {
-                    PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
+                    ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
                     PlayerDataCommands commandData = data.get(new PlayerDataCommands());
                     TempShopData shopData = commandData.playerShopData.tempShop;
                     if (shopData != null && shopData.getStage().equals(TempShopData.ShopStage.stock)) {
-                        ((ItemShopSaleData) shopData.shop.saleData).addStock(pos);
-                        shopData.resetStage();
-                        commandData.playerShopData.tempShop = shopData;
-                        data.put(commandData);
-                        ArrowCore.INSTANCE.getMenuRegistry().createMenu("edit_shop_menu", serverPlayer).open();
+                        if(!PlayerShopUtils.isInOverworld(serverPlayer)) {
+                            player.sendMessage(ModTranslations.err("stock_overworld"));
+                        } else {
+                            ((ItemShopSaleData) shopData.shop.saleData).setStock(pos);
+                            shopData.resetStage();
+                            commandData.playerShopData.tempShop = shopData;
+                            data.put(commandData);
+                            ArrowCore.INSTANCE.getMenuRegistry().createMenu("edit_shop_menu", serverPlayer).open();
+                        }
                         return ActionResult.FAIL;
                     }
                 }
@@ -401,17 +413,12 @@ public class ArrowCommands implements ModInitializer {
             return ActionResult.PASS;
         }));
 
+        eventRegistry.registerEvent(() -> FirstJoinCallback.EVENT.register(player -> {
+            return ActionResult.PASS;
+        }));
+
         eventRegistry.registerEvent(() -> ArrowEvents.PLAYER_DATA_LOADED_EVENT.register((player, data) -> {
             PlayerDataCommands commandData = data.get(new PlayerDataCommands());
-
-            if(ArrowCore.CONFIG.isDebug)
-                ArrowCommands.LOGGER.warn("Current Loaded Player Data: {}", ArrowCore.INSTANCE.getPlayerDataRegistry().getLoadedData().size());
-
-            if(!DaycareMenu.daycareMenus.containsKey(player.getUuid())
-                    && commandData.daycareData.isBreeding()
-                    && !commandData.daycareData.isReadyToHatch()) {
-                DaycareMenu.daycareMenus.put(player.getUuid(), null);
-            }
 
             KitData starterKit = KitRegistry.get("starter");
             if(starterKit != null && !commandData.kitTimeStamps.containsKey("starter")) {
@@ -422,11 +429,28 @@ public class ArrowCommands implements ModInitializer {
                     commandData.kitTimeStamps.put(starterKit.id, now);
                 }
             }
+        }));
 
-            data.put(commandData);
+        eventRegistry.registerEvent(() -> ArrowEvents.ALL_PLAYER_DATA_LOADED_EVENT.register(allData -> {
+            allData.forEach(data -> {
 
-            if(ArrowCore.CONFIG.isDebug)
-                LOGGER.warn("Command Data Loaded for {}", player.getUuid());
+                PlayerDataCommands commandData = data.get(new PlayerDataCommands());
+                PlayerDataCore coreData = data.get(new PlayerDataCore());
+
+                if(ArrowCore.CONFIG.isDebug)
+                    ArrowCommands.LOGGER.warn("Current Loaded Player Data: {}", ArrowCore.INSTANCE.getPlayerDataRegistry().getLoadedData().size());
+
+                if(!DaycareMenu.daycareMenus.containsKey(data.uuid)
+                        && commandData.daycareData.isBreeding()
+                        && !commandData.daycareData.isReadyToHatch()) {
+                    DaycareMenu.daycareMenus.put(data.uuid, null);
+                }
+
+                data.put(commandData);
+
+                if(ArrowCore.CONFIG.isDebug)
+                    LOGGER.warn("Command Data Loaded for {}", coreData.username.getString());
+            });
         }));
 
         eventRegistry.registerEvent(() -> ArrowEvents.SERVER_DATA_LOADED_EVENT.register((serverData) -> {
@@ -438,7 +462,7 @@ public class ArrowCommands implements ModInitializer {
         eventRegistry.registerEvent(() -> ArrowEvents.CONFIG_LOADED_EVENT.register(() -> {
 
             if(ArrowCore.CONFIG.loadOldData) {
-                File oldDir = new File(Constants.ARROW_DATA_DIR, "/old_data");
+                File oldDir = new File(ArrowCoreConstants.ARROW_DATA_DIR, "/old_data");
                 if (oldDir.mkdir()) LOGGER.warn("Old Data Folder Created");
 
                 LOGGER.warn("Loading Old Data");
@@ -446,7 +470,7 @@ public class ArrowCommands implements ModInitializer {
                 if (files != null) {
                     for (File file : files) {
                         UUID uuid = UUID.fromString(file.getName().replace(".dat", ""));
-                        PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(uuid);
+                        ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(uuid);
                         PlayerDataCommands commandData = data.get(new PlayerDataCommands());
 
                         JsonElement old = JsonUtils.loadFromJson(oldDir, file.getName(), JsonParser.parseString("{}"));
@@ -467,7 +491,7 @@ public class ArrowCommands implements ModInitializer {
         }));
 
         eventRegistry.registerEvent(() -> ServerPlayConnectionEvents.JOIN.register((network, sender, server) -> {
-            PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(network.player);
+            ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(network.player);
             PlayerDataCommands commandData = data.get(new PlayerDataCommands());
             if(commandData.onTimeData == null) commandData.onTimeData = new OnTimeData();
             commandData.onTimeData.updateLastOnline();
@@ -493,8 +517,8 @@ public class ArrowCommands implements ModInitializer {
         eventRegistry.registerEvent(() -> MenuCloseCallback.EVENT.register((menu) -> {
             ServerPlayerEntity player = menu.getPlayer();
             String menuName = menu.menuName;
-            
-            PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
+
+            ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player);
             PlayerDataCommands commandData = data.get(new PlayerDataCommands());
             
             if(menuName.equalsIgnoreCase("daycare")) {

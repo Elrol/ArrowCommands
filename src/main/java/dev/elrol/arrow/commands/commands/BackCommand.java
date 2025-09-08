@@ -5,7 +5,7 @@ import com.mojang.brigadier.context.CommandContext;
 import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.commands._CommandBase;
 import dev.elrol.arrow.commands.data.PlayerDataCommands;
-import dev.elrol.arrow.data.PlayerData;
+import dev.elrol.arrow.data.ArrowPlayerData;
 import dev.elrol.arrow.libs.ModTranslations;
 import dev.elrol.arrow.libs.PermUtils;
 import net.minecraft.command.CommandRegistryAccess;
@@ -29,7 +29,7 @@ public class BackCommand extends _CommandBase {
     private int noArgs(CommandContext<ServerCommandSource> context) {
         ServerPlayerEntity player = getPlayer(context);
         if(player != null) {
-            PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
+            ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
             PlayerDataCommands commandData = data.get(new PlayerDataCommands());
 
             if(commandData.goBack(player)){

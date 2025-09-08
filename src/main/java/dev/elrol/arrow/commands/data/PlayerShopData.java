@@ -10,7 +10,7 @@ import java.util.*;
 public class PlayerShopData {
 
     public static final Codec<PlayerShopData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.unboundedMap(Codec.STRING, ShopData.CODEC).fieldOf("shops").forGetter(data -> data.shops),
+            Codec.unboundedMap(Codec.STRING, ShopData.CODEC).optionalFieldOf("shops", Map.of()).forGetter(data -> data.shops),
             TempShopData.CODEC.optionalFieldOf("tempShop").forGetter(data -> Optional.ofNullable(data.tempShop))
     ).apply(instance, (shops, tempShop) -> {
         PlayerShopData data = new PlayerShopData();

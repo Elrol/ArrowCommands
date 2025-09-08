@@ -4,32 +4,28 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.elrol.arrow.ArrowCore;
 import dev.elrol.arrow.api.registries.IEconomyRegistry;
-import dev.elrol.arrow.codecs.ArrowCodecs;
-import dev.elrol.arrow.commands.ArrowCommands;
+import dev.elrol.arrow.commands.libs.BlockUtils;
+import dev.elrol.arrow.commands.libs.InventoryUtils;
 import dev.elrol.arrow.commands.registries.ShopSaleDataTypes;
 import net.luckperms.api.util.Tristate;
-import net.minecraft.block.entity.BarrelBlockEntity;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.ChestBlockEntity;
-import net.minecraft.block.entity.LockableContainerBlockEntity;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Uuids;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ShopData {
 
     public static final Codec<ShopData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Uuids.CODEC.fieldOf("owner").forGetter(ShopData::getOwner),
-            ArrowCodecs.BLOCK_POS_CODEC.optionalFieldOf("displayCase").forGetter(data -> Optional.ofNullable(data.getDisplayCase())),
+            BlockPos.CODEC.optionalFieldOf("displayCase").forGetter(data -> Optional.ofNullable(data.getDisplayCase())),
             ShopSaleData.CODEC.fieldOf("saleData").forGetter(data -> data.saleData),
             Codec.INT.fieldOf("price").forGetter(ShopData::getPrice),
             Codec.INT.fieldOf("isSelling").forGetter(data -> switch (data.isSelling) {
@@ -40,18 +36,11 @@ public class ShopData {
     ).apply(instance, (owner, displayCase, saleData, price, isSelling) -> {
         ShopData data = new ShopData(owner);
         displayCase.ifPresent(data::setDisplayCase);
-        if(saleData instanceof ItemShopSaleData itemSaleData) {
-            data.saleData = itemSaleData;
-        } else if (saleData instanceof PokemonShopSaleData pokeSaleData) {
-            data.saleData = pokeSaleData;
-        } else {
-            ArrowCommands.LOGGER.debug(saleData.toString());
-            data.saleData = null;
-        }
+        data.saleData = saleData;
         data.setPrice(price);
         data.setIsSelling(switch (isSelling) {
-            case -1 -> Tristate.FALSE;
             case 1 -> Tristate.TRUE;
+            case -1 -> Tristate.FALSE;
             default -> Tristate.UNDEFINED;
         });
 
@@ -89,6 +78,9 @@ public class ShopData {
         this.price = price;
     }
 
+    /**
+     * @return If the shop selling to the player
+     */
     public Tristate getIsSelling() {
         //ToDo change this to allow buying of pokemon
         if(saleData.getType().equals(ShopSaleDataTypes.POKEMON_SHOP)) return Tristate.TRUE;
@@ -103,63 +95,43 @@ public class ShopData {
         return ArrowCore.INSTANCE.getEconomyRegistry().formatAmount(price);
     }
 
-    public int getMaxUnits(ServerWorld world) {
-        if(saleData.getType().equals(ShopSaleDataTypes.POKEMON_SHOP)) return 1;
+    public int getMaxUnits(ServerPlayerEntity player) {
+        if(saleData.getType().equals(ShopSaleDataTypes.POKEMON_SHOP)) {
+            PokemonShopSaleData pokemonShopSaleData = (PokemonShopSaleData) saleData;
+            return pokemonShopSaleData.amount;
+        } else {
+            ItemShopSaleData itemSaleData = (ItemShopSaleData) saleData;
+            BlockPos pos = itemSaleData.stock;
+            MinecraftServer server = player.getServer();
+            assert server != null;
+            ServerWorld world = server.getOverworld();
+            Inventory stockInventory = InventoryUtils.getInventoryAt(world, pos);
+            if(stockInventory == null) return 0;
 
-        ItemShopSaleData itemSaleData = (ItemShopSaleData) saleData;
-        List<BlockPos> invalidLocations = new ArrayList<>();
-
-        AtomicInteger total = new AtomicInteger();
-        ItemStack target = itemSaleData.item.copyWithCount(1);
-
-        itemSaleData.stock.forEach((pos -> {
-            BlockEntity entity = world.getBlockEntity(pos);
-            if(entity instanceof ChestBlockEntity || entity instanceof BarrelBlockEntity) {
-                LockableContainerBlockEntity storage = (LockableContainerBlockEntity) entity;
-                for(int i = 0; i < 27; i++) {
-                    ItemStack slot = storage.getStack(i);
-                    if(slot.copyWithCount(1).equals(target)) {
-                        total.addAndGet(slot.getCount());
-                    }
-                }
-            } else {
-                invalidLocations.add(pos);
+            if(isSelling.equals(Tristate.TRUE)) {
+                return Math.floorDiv(
+                        InventoryUtils.getItemCount(stockInventory, itemSaleData.getItemStack()),
+                        itemSaleData.getAmount());
+            } else if(isSelling.equals(Tristate.FALSE)) {
+                return Math.floorDiv(
+                        Math.min(
+                                InventoryUtils.getItemCount(player.getInventory(), itemSaleData.getItemStack()),
+                                InventoryUtils.spaceLeft(stockInventory, itemSaleData.getItemStack())),
+                        itemSaleData.getAmount());
             }
-        }));
-
-        itemSaleData.stock.removeAll(invalidLocations);
-        saleData = itemSaleData;
-
-        return Math.floorDiv(total.get(), itemSaleData.amount);
+        }
+        return 0;
     }
 
-    public ListingData getListing(ServerWorld world) {
-        ListingData listing = new ListingData(saleData.getDisplayItem(), price, 1);
-        listing.setMaxUnits(getMaxUnits(world));
+    public ListingData getListing(ServerPlayerEntity player) {
+        ListingData listing = new ListingData(saleData.getDisplayItem(), price, 0);
+        listing.setMaxUnits(getMaxUnits(player));
         return listing;
     }
 
     public ShopSaleData.Type<?> getType() { return saleData.getType(); }
 
     public boolean isShopOpen() {
-        boolean isItemShop = getType().equals(ShopSaleDataTypes.ITEM_SHOP);
-        IEconomyRegistry econRegistry = ArrowCore.INSTANCE.getEconomyRegistry();
-
-        if(isItemShop) {
-            if(isSelling.asBoolean()) {
-                //Selling items
-            } else {
-                //Buying items
-            }
-        } else {
-            if(isSelling.asBoolean()) {
-                //Selling Pokémon
-                return saleData.isShopOpen();
-            } else {
-                //Buying Pokémon
-                return econRegistry.canAfford(owner, BigDecimal.valueOf(getPrice()));
-            }
-        }
-        return true;
+        return saleData.isShopOpen();
     }
 }

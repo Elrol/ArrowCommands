@@ -8,7 +8,7 @@ import dev.elrol.arrow.commands.CommandConfig;
 import dev.elrol.arrow.commands._CommandBase;
 import dev.elrol.arrow.commands.data.PlayerDataCommands;
 import dev.elrol.arrow.data.ExactLocation;
-import dev.elrol.arrow.data.PlayerData;
+import dev.elrol.arrow.data.ArrowPlayerData;
 import dev.elrol.arrow.data.PlayerDataCore;
 import dev.elrol.arrow.libs.ModTranslations;
 import dev.elrol.arrow.libs.PermUtils;
@@ -44,7 +44,7 @@ public class RTPCommand extends _CommandBase {
         ServerPlayerEntity player = getPlayer(context);
         if(player != null) {
             ServerWorld world = player.getServerWorld();
-            PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
+            ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
             PlayerDataCore coreData = data.get(new PlayerDataCore());
 
             int count = 0;

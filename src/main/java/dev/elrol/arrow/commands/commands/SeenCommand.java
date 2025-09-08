@@ -10,7 +10,7 @@ import dev.elrol.arrow.commands.commands.suggestions.PlayerSuggestionProvider;
 import dev.elrol.arrow.commands.data.OnTimeData;
 import dev.elrol.arrow.commands.data.PlayerDataCommands;
 import dev.elrol.arrow.commands.libs.DateTimeUtils;
-import dev.elrol.arrow.data.PlayerData;
+import dev.elrol.arrow.data.ArrowPlayerData;
 import dev.elrol.arrow.data.PlayerDataCore;
 import dev.elrol.arrow.libs.ModTranslations;
 import dev.elrol.arrow.libs.PermUtils;
@@ -43,9 +43,9 @@ public class SeenCommand extends _CommandBase {
 
 
         if(player != null) {
-            PlayerData data = null;
+            ArrowPlayerData data = null;
 
-            for(PlayerData playerData : ArrowCore.INSTANCE.getPlayerDataRegistry().getLoadedData().values()) {
+            for(ArrowPlayerData playerData : ArrowCore.INSTANCE.getPlayerDataRegistry().getLoadedData().values()) {
                 PlayerDataCore coreData = playerData.get(new PlayerDataCore());
                 if(coreData.username.getString().equalsIgnoreCase(targetName)) {
                     data = playerData;

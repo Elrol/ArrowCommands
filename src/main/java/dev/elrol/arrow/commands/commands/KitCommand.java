@@ -10,7 +10,7 @@ import dev.elrol.arrow.commands.data.KitData;
 import dev.elrol.arrow.commands.data.PlayerDataCommands;
 import dev.elrol.arrow.commands.libs.DateTimeUtils;
 import dev.elrol.arrow.commands.registries.KitRegistry;
-import dev.elrol.arrow.data.PlayerData;
+import dev.elrol.arrow.data.ArrowPlayerData;
 import dev.elrol.arrow.libs.ModTranslations;
 import dev.elrol.arrow.libs.PermUtils;
 import net.minecraft.command.CommandRegistryAccess;
@@ -39,7 +39,7 @@ public class KitCommand extends _CommandBase {
         ServerPlayerEntity player = getPlayer(context);
         String ID = StringArgumentType.getString(context, "kit");
         if(player != null) {
-            PlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
+            ArrowPlayerData data = ArrowCore.INSTANCE.getPlayerDataRegistry().getPlayerData(player.getUuid());
             PlayerDataCommands commandData = data.get(new PlayerDataCommands());
             KitData kit = KitRegistry.get(ID);
 

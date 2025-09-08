@@ -115,7 +115,7 @@ public class DaycareUtils {
         egg.getCustomProperties().forEach(property -> ArrowCommands.LOGGER.warn(property.asString()));
         DataResult<JsonElement> json = PokemonProperties.getCODEC().encodeStart(JsonOps.INSTANCE, egg);
 
-        JsonUtils.saveToJson(Constants.ARROW_DATA_DIR, "test.json", json.getOrThrow());
+        JsonUtils.saveToJson(ArrowCoreConstants.ARROW_DATA_DIR, "test.json", json.getOrThrow());
         return egg;
     }
 
@@ -154,7 +154,7 @@ public class DaycareUtils {
         IVs ivs = IVs.createRandomIVs(0);
         boolean hasDestinyKnot = CobblemonUtils.hasDestinyKnot(poke1,poke2);
 
-        List<Stats> validIVs = new ArrayList<>(Constants.IV_STATS);
+        List<Stats> validIVs = new ArrayList<>(ArrowCoreConstants.IV_STATS);
         int ivsSelected = 0;
 
         Stats powerStat1 = getPowerStat(poke1);
